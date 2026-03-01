@@ -4,17 +4,36 @@ import React, { useState, useEffect } from 'react';
 import { useBalance } from '@/context/BalanceContext';
 import { Play, Loader2, Coins, Rocket, Trophy } from 'lucide-react';
 
-const SYMBOL_MAP: Record<number, { e: string, color: string }> = {
-    0: { e: '', color: 'bg-transparent' }, // Vazio (explodido)
-    1: { e: '🚀', color: 'bg-gradient-to-br from-yellow-400 to-red-500 shadow-[0_0_20px_#ffeb3b88]' }, // Scatter Ouro
-    2: { e: '🐻', color: 'bg-orange-500' }, // Laranja
-    3: { e: '🟣', color: 'bg-purple-500' }, // Roxo
-    4: { e: '🔴', color: 'bg-red-500' }, // Vermelho
-    5: { e: '⭐', color: 'bg-green-400' }, // Estrela Verde
-    6: { e: '🍬', color: 'bg-pink-400' }, // Feijão Rosa
-    7: { e: '❤️', color: 'bg-red-600' }, // Coração
-    8: { e: '🍭', color: 'bg-gradient-to-b from-pink-400 to-purple-600 shadow-[0_0_15px_#e91e63]' }, // Pirulito Rosa
+const SYMBOL_MAP: Record<number, { e: string, color: string, img: string }> = {
+    0: { e: '', color: 'bg-transparent', img: '' },
+    1: { e: '🚀', color: 'bg-gradient-to-br from-yellow-400 to-red-500 shadow-[0_0_20px_#ffeb3b88]', img: '/assets/sugar/scatter.png' },
+    2: { e: '🐻', color: 'bg-orange-500', img: '/assets/sugar/urso-laranja.png' },
+    3: { e: '🟣', color: 'bg-purple-500', img: '/assets/sugar/urso-roxo.png' },
+    4: { e: '🔴', color: 'bg-red-500', img: '/assets/sugar/urso-vermelho.png' },
+    5: { e: '⭐', color: 'bg-green-400', img: '/assets/sugar/estrela.png' },
+    6: { e: '🍬', color: 'bg-pink-400', img: '/assets/sugar/feijao.png' },
+    7: { e: '❤️', color: 'bg-red-600', img: '/assets/sugar/coracao.png' },
+    8: { e: '🍭', color: 'bg-gradient-to-b from-pink-400 to-purple-600 shadow-[0_0_15px_#e91e63]', img: '/assets/sugar/pirulito.png' },
 };
+
+function SymbolImageFallback({ src, fallbackEmoji, isExploding, symbolId }: { src: string, fallbackEmoji: string, isExploding: boolean, symbolId: number }) {
+    const [hasError, setHasError] = useState(false);
+
+    if (symbolId === 0) return null; // Vazio não tem imagem
+
+    if (hasError || !src) {
+        return <span className={isExploding ? "animate-ping" : ""}>{fallbackEmoji}</span>;
+    }
+
+    return (
+        <img
+            src={src}
+            alt="Symbol"
+            onError={() => setHasError(true)}
+            className={`w-[85%] h-[85%] object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transition-transform duration-300 ${isExploding ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        />
+    );
+}
 
 type TumbleStep = {
     grid: number[][];
@@ -157,8 +176,12 @@ export default function SugarSlot() {
                                             ${symbol === 0 ? 'opacity-0 scale-50' : 'opacity-100 shadow-[inset_0_-4px_rgba(0,0,0,0.3)] hover:scale-105 hover:z-20'}
                                         `}
                                     >
-                                        {/* AQUI VOCÊ PODERÁ TROCAR POR <img src="/assets/urso-vermelho.png" /> */}
-                                        {symInfo.e}
+                                        <SymbolImageFallback
+                                            src={symInfo.img}
+                                            fallbackEmoji={symInfo.e}
+                                            isExploding={isExploding}
+                                            symbolId={symbol}
+                                        />
                                     </div>
 
                                     {/* Marcador de Multiplicador Colado na Grade (As manchas roxas/vermelhas do sugar rush) */}
