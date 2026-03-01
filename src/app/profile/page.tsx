@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useBalance } from '@/context/BalanceContext';
-import { User, ShieldCheck, History, Wallet, CreditCard, ChevronRight, MapPin } from 'lucide-react';
+import { User, ShieldCheck, History, Wallet, CreditCard, ChevronRight, Trophy, Activity } from 'lucide-react';
 
 const ProfilePage = () => {
     const { profile, user } = useBalance();
@@ -89,7 +89,7 @@ const ProfilePage = () => {
 
                         <div className="p-8 rounded-[2rem] bg-gradient-to-br from-white/5 to-transparent border border-white/5">
                             <h4 className="flex items-center gap-3 text-lg font-black text-white italic uppercase tracking-tight mb-6">
-                                <Trophy className="text-yellow-500" size={20} /> Experiência & Recompensas
+                                <Trophy className="text-yellow-500" size={20} /> Experiência {"&"} Recompensas
                             </h4>
                             <div className="space-y-8">
                                 <div>
