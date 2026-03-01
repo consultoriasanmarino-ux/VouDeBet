@@ -14,6 +14,7 @@ interface BalanceContextType {
     isLoading: boolean;
     refreshBalance: () => Promise<void>;
     user: any | null;
+    isAdmin: boolean;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
@@ -60,7 +61,6 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // Realtime profile updates
     useEffect(() => {
         if (!user?.id) return;
 
@@ -81,7 +81,8 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
                 setBalanceType: setCurrentType,
                 isLoading,
                 refreshBalance: async () => { if (user) await fetchProfile(user.id); },
-                user
+                user,
+                isAdmin: profile?.is_admin || false
             }}
         >
             {children}

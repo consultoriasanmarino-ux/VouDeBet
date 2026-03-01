@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import AgeVerificationModal from "@/components/AgeVerificationModal";
 import { BalanceProvider } from "@/context/BalanceContext";
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -28,8 +29,9 @@ export default function RootLayout({
         <title>VouDeBet | Apostas de Elite</title>
         <meta name="description" content="Cassino digital de alta performance inspirado nas melhores plataformas mundiais." />
       </head>
-      <body className={cn(inter.className, "min-h-screen relative")}>
+      <body className={cn(inter.className, "min-h-screen relative overflow-x-hidden")}>
         <BalanceProvider>
+          <AgeVerificationModal />
           <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
           <div className={cn(
             "transition-all duration-300 min-h-screen",
