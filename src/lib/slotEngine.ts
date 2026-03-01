@@ -16,7 +16,7 @@ export interface Cluster {
 export interface TumbleStep {
     grid: SymbolID[][];
     clusters: Cluster[];
-    currentMultipliers: Record<string, number>; // r-c -> value
+    currentMultipliers: Record<number, number>; // index (0-48) -> value
     stepWin: number;
 }
 
@@ -24,7 +24,7 @@ export interface SpinResult {
     steps: TumbleStep[];
     totalWin: number;
     bet: number;
-    finalMultipliers: Record<string, number>;
+    finalMultipliers: Record<number, number>;
 }
 
 // Configuração dos Símbolos
@@ -153,10 +153,15 @@ function dropSymbols(grid: SymbolID[][], clustersToExplode: Cluster[]): SymbolID
     return newGrid;
 }
 
-export function playSpin(bet: number): SpinResult {
+export function playSpin(bet: number, initialMultipliers: Record<number, number> = {}): SpinResult {
     let currentGrid = generateGrid();
-    let currentMultipliers: Record<string, number> = {};
-    let activeMultipliersLocations = new Set<string>(); // para saber onde ocorreu explosão e dobrar
+    let currentMultipliers: Record<number, number> = { ...initialMultipliers };
+
+    // activeMultipliersLocations sabe onde houve explosão neste giro atual para dobrar, mas
+    // as posições que JÁ tinham multiplicador antes do giro iniciam "dobráveis"
+    let activeMultipliersLocations = new Set<number>(
+        Object.keys(initialMultipliers).map(k => parseInt(k))
+    );
 
     const steps: TumbleStep[] = [];
     let totalWin = 0;
@@ -193,9 +198,9 @@ export function playSpin(bet: number): SpinResult {
             // Soma multiplicadores das posições desse cluster
             let multiplierSum = 0;
             for (const p of raw.points) {
-                const key = `${p.r}-${p.c}`;
-                if (currentMultipliers[key]) {
-                    multiplierSum += currentMultipliers[key];
+                const index = p.r * COLS + p.c;
+                if (currentMultipliers[index]) {
+                    multiplierSum += currentMultipliers[index];
                 }
             }
 
@@ -227,17 +232,17 @@ export function playSpin(bet: number): SpinResult {
         // Atualiza as trilhas multiplicadoras (Spots)
         for (const cluster of processedClusters) {
             for (const p of cluster.points) {
-                const key = `${p.r}-${p.c}`;
-                if (activeMultipliersLocations.has(key)) {
+                const index = p.r * COLS + p.c;
+                if (activeMultipliersLocations.has(index)) {
                     // Já houve explosão aqui, dobre o valor (inicia em 2x, até 128x no máximo comum)
-                    if (!currentMultipliers[key]) {
-                        currentMultipliers[key] = 2;
+                    if (!currentMultipliers[index]) {
+                        currentMultipliers[index] = 2;
                     } else {
-                        currentMultipliers[key] = Math.min(128, currentMultipliers[key] * 2);
+                        currentMultipliers[index] = Math.min(128, currentMultipliers[index] * 2);
                     }
                 } else {
                     // Primeira explosão crava a marca
-                    activeMultipliersLocations.add(key);
+                    activeMultipliersLocations.add(index);
                 }
             }
         }

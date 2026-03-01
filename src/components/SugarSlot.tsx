@@ -19,7 +19,7 @@ const SYMBOL_MAP: Record<number, { e: string, color: string }> = {
 type TumbleStep = {
     grid: number[][];
     clusters: { points: { r: number, c: number }[], symbol: number, totalPayout: number }[];
-    currentMultipliers: Record<string, number>;
+    currentMultipliers: Record<number, number>;
     stepWin: number;
 };
 
@@ -34,7 +34,7 @@ export default function SugarSlot() {
         Array.from({ length: 7 }, () => Array.from({ length: 7 }, () => Math.floor(Math.random() * 7) + 2))
     );
     const [activeClusters, setActiveClusters] = useState<string[]>([]);
-    const [multipliers, setMultipliers] = useState<Record<string, number>>({});
+    const [multipliers, setMultipliers] = useState<Record<number, number>>({});
     const [totalWin, setTotalWin] = useState(0);
 
     const spin = async () => {
@@ -141,7 +141,8 @@ export default function SugarSlot() {
                     {displayGrid.map((row, r) =>
                         row.map((symbol, c) => {
                             const isExploding = activeClusters.includes(`${r}-${c}`);
-                            const mult = multipliers[`${r}-${c}`];
+                            const linearIndex = r * 7 + c;
+                            const mult = multipliers[linearIndex];
                             const symInfo = SYMBOL_MAP[symbol] || SYMBOL_MAP[0];
 
                             return (
