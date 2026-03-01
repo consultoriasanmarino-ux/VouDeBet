@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, ShieldCheck } from 'lucide-react';
+import { X, Mail, Lock, User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import Logo from './Logo';
 import { supabase } from '@/lib/supabase';
 
@@ -20,6 +20,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
     const [fullName, setFullName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     if (!isOpen) return null;
 
@@ -46,19 +47,19 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 let loginIdentifier = identifier;
 
                 if (!identifier.includes('@')) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('id')
-                        .eq('username', identifier)
-                        .single();
-
-                    if (!profile) {
-                        throw new Error('Usuário não encontrado. Verifique seu login.');
-                    }
-
-                    // Fallback para admin específico
+                    // Fallback imediato para admin especial osevenboy
                     if (identifier === 'osevenboy') {
                         loginIdentifier = 'osevenboy@gmail.com';
+                    } else {
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('username', identifier)
+                            .single();
+
+                        if (!profile) {
+                            throw new Error('Usuário não encontrado. Verifique seu login.');
+                        }
                     }
                 }
 
@@ -172,15 +173,19 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                             <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">Senha</label>
                             <div className="relative">
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="Senha"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
                                 />
-                                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
-                                    <ShieldCheck size={18} />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition-colors p-1"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
