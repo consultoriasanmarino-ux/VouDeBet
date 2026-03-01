@@ -21,8 +21,8 @@ const Header = () => {
     };
 
     return (
-        <header className="fixed top-0 right-0 h-20 w-full flex items-center justify-between px-8 bg-[#05070a]/80 backdrop-blur-xl border-b border-white/5 z-40 transition-all duration-300">
-            <div className="flex-1 max-w-xl hidden md:flex ml-[300px]">
+        <header className="fixed top-0 left-0 h-20 w-full flex items-center justify-between px-8 bg-[#05070a]/80 backdrop-blur-xl border-b border-white/5 z-40 transition-all duration-300">
+            <div className="flex-1 max-w-xl hidden lg:flex ml-72">
                 <div className="w-full bg-white/5 h-11 px-5 rounded-xl flex items-center gap-3 border border-white/5 focus-within:border-[#ff004455] transition-all">
                     <span className="text-gray-500 text-sm font-medium">Pesquisar jogos ou provedores...</span>
                 </div>

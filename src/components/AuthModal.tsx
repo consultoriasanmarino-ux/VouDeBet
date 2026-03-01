@@ -83,9 +83,9 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
     };
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 sm:p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 sm:p-4 overflow-y-auto overflow-x-hidden">
             {/* Dark Backdrop */}
-            <div className="absolute inset-0 bg-[#05070a]/90 backdrop-blur-md" onClick={onClose} />
+            <div className="fixed inset-0 bg-[#05070a]/95 backdrop-blur-md" onClick={onClose} />
 
             {/* Modal Container */}
             <div className="relative w-full max-w-lg bg-[#0d121b] border border-white/5 rounded-[3rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-500">
