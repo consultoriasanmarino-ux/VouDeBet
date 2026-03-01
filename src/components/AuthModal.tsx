@@ -87,7 +87,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 window.location.reload();
             }
         } catch (err: any) {
-            setError(err.message === 'Invalid login credentials' ? 'Dados inválidos. Verifique seu login/senha.' : err.message);
+            let msg = err.message;
+            if (msg === 'Invalid login credentials') msg = 'Dados inválidos. Verifique seu login/senha.';
+            if (msg?.toLowerCase().includes('rate limit')) msg = 'Limite de tentativas de e-mail atingido. (Dica: Desative o Rate Limit de Emails nas opções de Auth do seu painel Supabase, ou aguarde)';
+            if (msg?.toLowerCase().includes('already registered')) msg = 'Este e-mail já está cadastrado.';
+            setError(msg);
         } finally {
             setIsLoading(false);
         }
