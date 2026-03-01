@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Wallet, Copy, CheckCircle2, QrCode, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Wallet, Copy, CheckCircle2, QrCode, ArrowRight, Gift, Loader2 } from 'lucide-react';
 import { useBalance } from '@/context/BalanceContext';
+import { supabase } from '@/lib/supabase';
 
 interface DepositModalProps {
     isOpen: boolean;
@@ -10,13 +11,100 @@ interface DepositModalProps {
 }
 
 const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
+    const { profile, user, refreshBalance } = useBalance();
+
+    const [activeTab, setActiveTab] = useState<'pix' | 'cupom'>('pix');
     const [amount, setAmount] = useState('50');
-    const [step, setStep] = useState<'amount' | 'pix'>('amount');
+    const [step, setStep] = useState<'amount' | 'cpf_verification' | 'pix'>('amount');
     const pixKey = "00020126580014BR.GOV.BCB.PIX01366dec3a0b-1f8a-4c2a-aac4-85c6750b018c5204000053039865802BR5915VOU DE BET LTDA6009SAO PAULO62070503***6304E2B1";
+
+    const [cpf, setCpf] = useState('');
+    const [birthDate, setBirthDate] = useState('');
+    const [couponCode, setCouponCode] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+
+    // Reset state upon opening
+    useEffect(() => {
+        if (isOpen) {
+            setStep('amount');
+            setActiveTab('pix');
+            setCouponCode('');
+            setCpf('');
+            setBirthDate('');
+            setErrorMsg('');
+            setSuccessMsg('');
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    const handleNext = () => setStep('pix');
+    const handleNextPix = () => {
+        if (!profile) return;
+        setErrorMsg('');
+
+        // Verifica se CPF ou Nascimento faltam no BD
+        if (!profile.cpf || !profile.birth_date) {
+            setStep('cpf_verification');
+        } else {
+            setStep('pix');
+        }
+    };
+
+    const handleSaveCpfAndPix = async () => {
+        if (!cpf || !birthDate) {
+            setErrorMsg('Preencha os campos (000.000.000-00 e DD/MM/AAAA).');
+            return;
+        }
+        setIsLoading(true);
+        setErrorMsg('');
+
+        try {
+            const { error } = await supabase.from('profiles').update({
+                cpf,
+                birth_date: birthDate
+            }).eq('id', user?.id);
+
+            if (error) throw error;
+
+            await refreshBalance();
+            setStep('pix');
+        } catch (e: any) {
+            setErrorMsg(e.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRedeemCoupon = async () => {
+        if (!couponCode) {
+            setErrorMsg('Digite um cupom válido.');
+            return;
+        }
+        setIsLoading(true);
+        setErrorMsg('');
+        setSuccessMsg('');
+
+        try {
+            const res = await fetch('/api/deposit/coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user?.id, couponCode })
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error);
+
+            await refreshBalance();
+            setSuccessMsg(`Sucesso! R$ ${data.valor} depositado via Cupom!`);
+            setCouponCode('');
+        } catch (e: any) {
+            setErrorMsg(e.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(pixKey);
@@ -34,19 +122,40 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                     <X size={24} />
                 </button>
 
-                <div className="p-12">
-                    <div className="flex items-center gap-4 mb-10">
-                        <div className="w-14 h-14 rounded-2xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004433]">
-                            <Wallet size={28} />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">DEPOSITAR</h2>
-                            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Crédito instantâneo via PIX</p>
-                        </div>
-                    </div>
+                <div className="flex border-b border-white/5">
+                    <button onClick={() => { setActiveTab('pix'); setStep('amount'); setErrorMsg(''); setSuccessMsg(''); }} className={`flex-1 flex items-center justify-center gap-2 py-6 text-xs font-black uppercase tracking-widest italic transition-all ${activeTab === 'pix' ? 'text-[#ff0044] bg-[#ff004411] border-b-2 border-[#ff0044]' : 'text-gray-500 hover:bg-white/5 border-b-2 border-transparent'}`}>
+                        <Wallet size={16} /> PIX RÁPIDO
+                    </button>
+                    <button onClick={() => { setActiveTab('cupom'); setErrorMsg(''); setSuccessMsg(''); }} className={`flex-1 flex items-center justify-center gap-2 py-6 text-xs font-black uppercase tracking-widest italic transition-all ${activeTab === 'cupom' ? 'text-[#ff0044] bg-[#ff004411] border-b-2 border-[#ff0044]' : 'text-gray-500 hover:bg-white/5 border-b-2 border-transparent'}`}>
+                        <Gift size={16} /> RESGATAR CUPOM
+                    </button>
+                </div>
 
-                    {step === 'amount' ? (
-                        <div className="space-y-8">
+                <div className="p-12">
+                    {errorMsg && (
+                        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center">
+                            {errorMsg}
+                        </div>
+                    )}
+
+                    {successMsg && (
+                        <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-xs font-bold text-center">
+                            {successMsg}
+                        </div>
+                    )}
+
+                    {activeTab === 'pix' && step === 'amount' && (
+                        <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-14 h-14 rounded-2xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004433]">
+                                    <Wallet size={28} />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">DEPOSITAR</h2>
+                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Crédito instantâneo via PIX</p>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-3 gap-3">
                                 {['20', '50', '100', '200', '500', '1000'].map((val) => (
                                     <button
@@ -70,13 +179,45 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                             </div>
 
                             <button
-                                onClick={handleNext}
+                                onClick={handleNextPix}
                                 className="w-full bg-[#ff0044] text-white font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all italic tracking-[0.2em]"
                             >
                                 GERAR QR CODE <ArrowRight size={20} />
                             </button>
                         </div>
-                    ) : (
+                    )}
+
+                    {activeTab === 'pix' && step === 'cpf_verification' && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white text-center mb-6">CONFIRME SEUS DADOS</h2>
+                            <p className="text-gray-500 text-xs font-bold text-center px-4 mb-4">Para gerar o QRCode em seu nome, precisamos confirmar seu CPF e Data de Nascimento obrigatórios do Banco Central.</p>
+
+                            <input
+                                placeholder="CPF (Apenas números)"
+                                value={cpf}
+                                onChange={(e) => setCpf(e.target.value.replace(/\D/g, ''))}
+                                maxLength={11}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 font-bold text-white outline-none focus:border-[#ff004455] transition-all"
+                            />
+
+                            <input
+                                placeholder="Data de Nascimento (DD/MM/AAAA)"
+                                value={birthDate}
+                                onChange={(e) => setBirthDate(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 font-bold text-white outline-none focus:border-[#ff004455] transition-all"
+                            />
+
+                            <button
+                                onClick={handleSaveCpfAndPix}
+                                disabled={isLoading}
+                                className="w-full bg-[#ff0044] text-white font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all italic tracking-[0.2em] disabled:opacity-50"
+                            >
+                                {isLoading ? <Loader2 className="animate-spin" /> : 'CONFIRMAR E GERAR PIX'}
+                            </button>
+                        </div>
+                    )}
+
+                    {activeTab === 'pix' && step === 'pix' && (
                         <div className="flex flex-col items-center gap-8 animate-in slide-in-from-right-8 duration-500">
                             <div className="p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,0,68,0.2)]">
                                 <QrCode size={180} className="text-black" />
@@ -101,8 +242,40 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
 
                             <div className="flex items-center gap-3 w-full p-6 rounded-2xl bg-green-500/5 border border-green-500/20 text-green-500">
                                 <CheckCircle2 size={24} className="animate-pulse" />
-                                <p className="text-xs font-black uppercase tracking-widest">Aguardando pagamento...</p>
+                                <p className="text-xs font-black uppercase tracking-widest">Aguardando pagamento de R$ {amount}...</p>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'cupom' && (
+                        <div className="space-y-8 animate-in slide-in-from-left-4 duration-300">
+                            <div className="flex flex-col items-center gap-4 text-center">
+                                <div className="w-16 h-16 rounded-3xl bg-[#ff0044] text-white flex items-center justify-center shadow-[0_0_30px_rgba(255,0,68,0.6)]">
+                                    <Gift size={32} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">RESGATAR CUPOM</h2>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Insira um código promocional ou de Bônus</p>
+                                </div>
+                            </div>
+
+                            <div className="relative mt-8">
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                    placeholder="EX: VOUDEBET200"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 px-6 text-xl font-black text-center text-white outline-none focus:border-[#ff004455] transition-all uppercase tracking-[0.2em]"
+                                />
+                            </div>
+
+                            <button
+                                onClick={handleRedeemCoupon}
+                                disabled={isLoading || !couponCode}
+                                className="w-full bg-white text-[#05070a] hover:bg-gray-200 font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all italic tracking-[0.2em] disabled:opacity-50"
+                            >
+                                {isLoading ? <Loader2 className="animate-spin" /> : 'RESGATAR SALDO'} <ArrowRight size={20} />
+                            </button>
                         </div>
                     )}
                 </div>

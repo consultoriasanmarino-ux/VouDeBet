@@ -53,13 +53,15 @@ function DashboardContent() {
   }, []);
 
   const fetchDemoGames = async () => {
+    // Filtramos apenas a engine nativa ou iframe_url interna por enquanto
     const { data } = await supabase.from('jogos_demo').select('*').order('created_at', { ascending: false });
-    if (data) setDemoGames(data);
+    if (data) {
+      setDemoGames(data.filter(game => game.iframe_url === 'INTERNAL_SUGAR_VDB' || game.slug === 'vs20sugarrush'));
+    }
   };
 
   const originalGames = [
-    { title: 'Crash Royal', image: 'https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=80&w=800', isNew: true, multiplier: '2.5x', slug: 'crash' },
-    { title: 'Double Neon', image: 'https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&q=80&w=800', multiplier: '14.0x', slug: 'double' },
+    { title: 'Sugar VouDeBet', image: 'https://images.unsplash.com/photo-1579621970588-a3f5ce762692?auto=format&fit=crop&q=80&w=800', isNew: true, multiplier: '5000x', slug: 'vs20sugarrush', category: 'Slots' },
   ];
 
   return (
@@ -139,10 +141,10 @@ function DashboardContent() {
               <section className="flex flex-col gap-8">
                 <div className="flex items-center justify-between border-l-2 border-[#ff0044] pl-5">
                   <h3 className="text-3xl font-black tracking-tighter italic uppercase text-white">
-                    Top <span className="text-[#ff0044]">{activeCategory || 'Cassino'}</span> Online
+                    Jogos em <span className="text-[#ff0044]">Destaque</span>
                   </h3>
                   <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[9px] font-black rounded uppercase tracking-widest">Ativos Agora</span>
+                    <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[9px] font-black rounded uppercase tracking-widest">Servidor 1 ATIVO</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
@@ -158,8 +160,10 @@ function DashboardContent() {
                         />
                       </Link>
                     )) : (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="aspect-[4/5] rounded-[2rem] bg-white/5 border border-white/5 animate-pulse" />
+                    Array.from({ length: 1 }).map((_, i) => (
+                      <div key={i} className="aspect-[4/5] rounded-[2rem] bg-white/5 border border-[#ff004455] animate-pulse relative overflow-hidden flex items-center justify-center">
+                        <p className="text-[#ff0044] font-black italic uppercase tracking-widest p-4 text-center">Buscando Engines...</p>
+                      </div>
                     ))
                   )}
                 </div>
