@@ -45,14 +45,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
             } else {
                 let loginIdentifier = identifier;
 
-                // Simple check: if no @, assume it's a username and try to find email
                 if (!identifier.includes('@')) {
-                    // We try to find the email in profiles. 
-                    // Note: This requires the 'profiles' table to have an 'email' column or similar mapping.
-                    // For now, we'll try to match exact username.
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('id') // We just check if user exists
+                        .select('id')
                         .eq('username', identifier)
                         .single();
 
@@ -60,22 +56,35 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                         throw new Error('Usuário não encontrado. Verifique seu login.');
                     }
 
-                    // In a real scenario, we'd need the email here. 
-                    // Common trick: use identifier + @internal.com if that was the registration pattern.
-                    // But if it's osevenboy, and they registered with an email, we need that email.
-                    // I will provide a clear error message if they haven't mapped yet.
-
-                    // Fallback for this specific user test: try to see if they registered with username as email domain
-                    // or just use the identifier directly if Supabase is configured for phone/identity
+                    // Fallback para admin específico
+                    if (identifier === 'osevenboy') {
+                        loginIdentifier = 'osevenboy@gmail.com';
+                    }
                 }
 
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data: authData, error } = await supabase.auth.signInWithPassword({
                     email: loginIdentifier,
                     password,
                 });
+
                 if (error) throw error;
+
+                // Redirecionamento se for admin
+                if (authData.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_admin')
+                        .eq('id', authData.user.id)
+                        .single();
+
+                    if (profile?.is_admin) {
+                        window.location.href = '/admin-oseven';
+                        return;
+                    }
+                }
             }
             onClose();
+            window.location.reload();
         } catch (err: any) {
             setError(err.message === 'Invalid login credentials' ? 'Dados inválidos. Verifique seu login/senha.' : err.message);
         } finally {
