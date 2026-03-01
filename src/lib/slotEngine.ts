@@ -33,37 +33,50 @@ export interface SpinResult {
 // 5: Estrela, 6: Feijão, 7: Coração, 8: Pirulito (Rosa)
 const SYMBOLS = [1, 2, 3, 4, 5, 6, 7, 8];
 
-// Pesos para geração aleatória (Símbolos mais fracos aparecem mais)
-const WEIGHTS = [
-    { s: 1, w: 2 },   // Scatter (muito raro)
-    { s: 2, w: 25 },  // Urso Laranja
-    { s: 3, w: 25 },  // Urso Roxo
-    { s: 4, w: 20 },  // Urso Vermelho
-    { s: 5, w: 15 },  // Estrela Verde
-    { s: 6, w: 10 },  // Feijão Rosa
-    { s: 7, w: 8 },   // Coração Laranja
-    { s: 8, w: 5 },   // Pirulito Rosa (Mais valioso)
-];
+export interface GameConfig {
+    rtp_level: number; // 0 a 100
+    payer_mode: boolean;
+}
 
 const ROWS = 7;
 const COLS = 7;
 
-function getRandomSymbol(): SymbolID {
-    const totalWeight = WEIGHTS.reduce((acc, curr) => acc + curr.w, 0);
+function getRandomSymbol(config: GameConfig): SymbolID {
+    // Pesos Dinâmicos - Começa forte nos símbolos fracos e fraco nos fortes:
+    // Scatter normal (w:2), modo pagador (w:20)
+    // Símbolos valiosos (5 a 8) tem chances levemente modificadas pelo RTP (Ex: RTP+ aumenta peso de pirulito).
+
+    // Multiplicador de suavidade do RTP
+    const rtpFactor = config.rtp_level / 50; // se =50, =1. se =100, =2. se =0, =0.
+
+    let scatterWeight = config.payer_mode ? 25 : 2;
+
+    const dynamicWeights = [
+        { s: 1, w: scatterWeight },   // Scatter
+        { s: 2, w: Math.max(10, 30 - 5 * rtpFactor) },  // Laranja
+        { s: 3, w: Math.max(10, 30 - 5 * rtpFactor) },  // Roxo
+        { s: 4, w: Math.max(10, 25 - 4 * rtpFactor) },  // Vermelho
+        { s: 5, w: 10 + 5 * rtpFactor },  // Estrela Verde
+        { s: 6, w: 8 + 4 * rtpFactor },   // Feijão Rosa
+        { s: 7, w: 5 + 5 * rtpFactor },   // Coração Laranja
+        { s: 8, w: 2 + 5 * rtpFactor },   // Pirulito Rosa
+    ];
+
+    const totalWeight = dynamicWeights.reduce((acc, curr) => acc + curr.w, 0);
     let r = Math.random() * totalWeight;
-    for (const item of WEIGHTS) {
+    for (const item of dynamicWeights) {
         if (r < item.w) return item.s;
         r -= item.w;
     }
-    return WEIGHTS[0].s;
+    return dynamicWeights[0].s;
 }
 
-function generateGrid(): SymbolID[][] {
+function generateGrid(config: GameConfig): SymbolID[][] {
     const grid: SymbolID[][] = [];
     for (let r = 0; r < ROWS; r++) {
         const row: SymbolID[] = [];
         for (let c = 0; c < COLS; c++) {
-            row.push(getRandomSymbol());
+            row.push(getRandomSymbol(config));
         }
         grid.push(row);
     }
@@ -144,17 +157,46 @@ function dropSymbols(grid: SymbolID[][], clustersToExplode: Cluster[]): SymbolID
                 writeR--;
             }
         }
-        // Preenche o topo restante com novos símbolos aleatórios
+        // Preenche o topo restante com novos símbolos aleatórios (Considerando os pesos da Config)
         for (let r = writeR; r >= 0; r--) {
-            newGrid[r][c] = getRandomSymbol();
+            newGrid[r][c] = getRandomSymbol({ rtp_level: 50, payer_mode: false }); // Drop temporário padrão se n houver config global, mas vamos passar abaixo
         }
     }
 
     return newGrid;
 }
 
-export function playSpin(bet: number, initialMultipliers: Record<number, number> = {}): SpinResult {
-    let currentGrid = generateGrid();
+function dropSymbolsConfig(grid: SymbolID[][], clustersToExplode: Cluster[], config: GameConfig): SymbolID[][] {
+    const newGrid = grid.map(row => [...row]);
+
+    // Marca posições que explodiram como 0
+    for (const cluster of clustersToExplode) {
+        for (const p of cluster.points) {
+            newGrid[p.r][p.c] = 0;
+        }
+    }
+
+    // Faz os símbolos caírem
+    for (let c = 0; c < COLS; c++) {
+        let writeR = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+            if (newGrid[r][c] !== 0) {
+                newGrid[writeR][c] = newGrid[r][c];
+                if (writeR !== r) newGrid[r][c] = 0;
+                writeR--;
+            }
+        }
+        // Preenche o topo restante com novos símbolos aleatórios com base nos pesos RTP!
+        for (let r = writeR; r >= 0; r--) {
+            newGrid[r][c] = getRandomSymbol(config);
+        }
+    }
+
+    return newGrid;
+}
+
+export function playSpin(bet: number, initialMultipliers: Record<number, number> = {}, config: GameConfig = { rtp_level: 50, payer_mode: false }): SpinResult {
+    let currentGrid = generateGrid(config);
     let currentMultipliers: Record<number, number> = { ...initialMultipliers };
 
     // activeMultipliersLocations sabe onde houve explosão neste giro atual para dobrar, mas
@@ -247,8 +289,8 @@ export function playSpin(bet: number, initialMultipliers: Record<number, number>
             }
         }
 
-        // Aplica queda
-        currentGrid = dropSymbols(currentGrid, processedClusters);
+        // Aplica queda com nova grid pesada
+        currentGrid = dropSymbolsConfig(currentGrid, processedClusters, config);
     } // Fim Tumble
 
     // Adiciona o passo final (tela em repouso após os tumbles terminarem, sem ganhos)

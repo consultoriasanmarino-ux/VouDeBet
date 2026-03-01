@@ -82,7 +82,7 @@ const PlayGame = () => {
             </div>
 
             {/* Game Iframe Container or Custom React Slot */}
-            {game.iframe_url === 'INTERNAL_SUGAR_VDB' ? (
+            {game.iframe_url === 'INTERNAL_SUGAR_VDB' || game.slug === 'vs20sugarrush' ? (
                 <div className="w-full bg-[#05070a] rounded-[2.5rem] border border-[#ff004433] overflow-hidden shadow-[0_0_50px_rgba(255,0,68,0.1)] py-10">
                     <SugarSlot />
                 </div>

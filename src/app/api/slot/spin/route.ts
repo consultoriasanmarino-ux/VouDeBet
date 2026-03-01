@@ -66,18 +66,30 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. GERA O GIRO E TUMBLES
-        const spinData = playSpin(bet, initialMultipliers);
+        // 2. BUSCA CONFIGURAÇÕES DO JOGO (RTP etc)
+        let { data: gameConfig } = await supabase
+            .from('game_configs')
+            .select('rtp_level, payer_mode')
+            .eq('game_slug', 'sugar_vdb')
+            .single();
+
+        // Fallback de segurança se admin ainda não configurou
+        if (!gameConfig) {
+            gameConfig = { rtp_level: 50, payer_mode: false };
+        }
+
+        // 3. GERA O GIRO E TUMBLES (Com Pesos RTP Reais)
+        const spinData = playSpin(bet, initialMultipliers, gameConfig);
         const winAmount = spinData.totalWin;
 
-        // 3. ATUALIZA SALDO
+        // 4. ATUALIZA SALDO
         let newBalance = currentBalance;
         if (bet > 0) {
             newBalance = currentBalance - bet + winAmount;
             await supabase.from('profiles').update({ [balanceField]: newBalance }).eq('id', userId);
         }
 
-        // 4. ATUALIZA TRAIL (Multipliers no Banco)
+        // 5. ATUALIZA TRAIL (Multipliers no Banco)
         if (Object.keys(spinData.finalMultipliers).length > 0) {
             const upserts = Object.entries(spinData.finalMultipliers).map(([idx, val]) => ({
                 session_id: session.id,
@@ -87,7 +99,7 @@ export async function POST(req: Request) {
             await supabase.from('game_multipliers').upsert(upserts, { onConflict: 'session_id, position_index' });
         }
 
-        // 5. REGISTRA NO HISTÓRICO
+        // 6. REGISTRA NO HISTÓRICO
         // Representar matriz inicial + vitórias em string para auditoria ("s_mark")
         const sMarkParts = Object.entries(spinData.finalMultipliers).map(([k, v]) => `${k}:${v}`);
         const s_mark = sMarkParts.length > 0 ? `tmb~${sMarkParts.join(',')}` : '';
