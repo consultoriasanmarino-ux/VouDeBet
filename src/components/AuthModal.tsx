@@ -39,7 +39,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
         try {
             if (mode === 'register') {
-                const { error } = await supabase.auth.signUp({
+                // Registration Flow
+                const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -51,17 +52,18 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 });
                 if (error) throw error;
 
-                // Força o login após cadastro caso o "Confirm email" esteja desligado no Supabase
-                const { error: loginError } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
-                if (loginError) throw loginError;
-            } else { // mode === 'login'
+                // Supabase already attempts an automatic login after registration
+                // if email confirmation is disabled. We just close and reload.
+                onClose();
+                window.location.reload();
+                return;
+
+            } else {
+                // Login Flow
                 let loginIdentifier = identifier;
 
                 if (!identifier.includes('@')) {
-                    // Usuário comum login via username (tentativa simples de converter para email padrão do App)
+                    // Attempt to login by Username
                     const cleanIdentifier = identifier.trim().toLowerCase();
                     const { data: profile } = await supabase
                         .from('profiles')
@@ -69,10 +71,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                         .eq('username', cleanIdentifier)
                         .single();
 
-                    if (!profile) {
-                        loginIdentifier = `${cleanIdentifier}@test.com`; // Assumindo padrão se não houver mapeamento
-                    } else {
-                        loginIdentifier = profile.email || `${cleanIdentifier}@test.com`;
+                    if (profile && profile.email) {
+                        loginIdentifier = profile.email;
                     }
                 }
 
@@ -82,9 +82,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 });
 
                 if (error) throw error;
+
+                onClose();
+                window.location.reload();
             }
-            onClose();
-            window.location.reload();
         } catch (err: any) {
             setError(err.message === 'Invalid login credentials' ? 'Dados inválidos. Verifique seu login/senha.' : err.message);
         } finally {
