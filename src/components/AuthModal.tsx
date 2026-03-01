@@ -100,7 +100,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 <div className="p-8">
                     {/* Logo & Title */}
                     <div className="flex flex-col items-center mb-8">
-                        <div className="text-[#f12c4c] mb-6">
+                        <div className="flex justify-center mb-6">
                             <Logo />
                         </div>
                         <h2 className="text-xl font-bold text-white tracking-tight">
@@ -147,10 +147,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                             </>
                         ) : (
                             <div className="space-y-1">
-                                <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">CPF Ou Endereço De Email</label>
+                                <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">USUÁRIO OU E-MAIL</label>
                                 <input
                                     type="text"
-                                    placeholder="CPF Ou Endereço De Email"
+                                    placeholder="USUÁRIO OU E-MAIL"
                                     required
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
