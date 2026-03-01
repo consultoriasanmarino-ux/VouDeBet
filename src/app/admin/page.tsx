@@ -130,7 +130,12 @@ const AdminDashboard = () => {
     const deleteGame = async (id: string) => {
         if (!confirm('Deseja realmente excluir este jogo?')) return;
         const { error } = await supabase.from('jogos_demo').delete().eq('id', id);
-        if (!error) fetchGames();
+        if (error) {
+            alert('Falha ao excluir o jogo. Verifique as políticas rls (Row Level Security) no Supabase. Erro: ' + error.message);
+        } else {
+            fetchGames();
+            alert('Jogo excluído com sucesso!');
+        }
     };
 
     const logOutAdmin = () => {

@@ -49,10 +49,10 @@ const Sidebar = ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }
             icon: <Flame size={16} />,
             key: 'originals',
             items: [
-                { icon: <Zap size={18} />, label: 'Crash', href: '/', active: pathname === '/' },
-                { icon: <History size={18} />, label: 'Double', href: '/', active: false },
-                { icon: <Activity size={18} />, label: 'Mines', href: '/', active: false },
-                { icon: <Dices size={18} />, label: 'Dice', href: '/', active: false },
+                { icon: <Zap size={18} />, label: 'Crash', href: '/?tab=Crash', active: pathname === '/' },
+                { icon: <History size={18} />, label: 'Double', href: '/?tab=Double', active: false },
+                { icon: <Activity size={18} />, label: 'Mines', href: '/?tab=Mines', active: false },
+                { icon: <Dices size={18} />, label: 'Dice', href: '/?tab=Dice', active: false },
             ]
         },
         {
@@ -60,9 +60,9 @@ const Sidebar = ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }
             icon: <Gamepad2 size={16} />,
             key: 'casino',
             items: [
-                { icon: <PlayCircle size={18} />, label: 'Ao Vivo', href: '/', active: false },
-                { icon: <Sparkles size={18} />, label: 'Slots', href: '/', active: false },
-                { icon: <Trophy size={18} />, label: 'Game Shows', href: '/', active: false },
+                { icon: <PlayCircle size={18} />, label: 'Ao Vivo', href: '/?tab=AoVivo', active: false },
+                { icon: <Sparkles size={18} />, label: 'Slots', href: '/?tab=Slots', active: false },
+                { icon: <Trophy size={18} />, label: 'Game Shows', href: '/?tab=GameShows', active: false },
             ]
         }
     ];

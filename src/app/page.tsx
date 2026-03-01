@@ -21,10 +21,32 @@ import {
 import { useBalance } from '@/context/BalanceContext';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function Home() {
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab');
+
   const [activeView, setActiveView] = useState<'lobby' | 'crash' | 'double'>('lobby');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [demoGames, setDemoGames] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (tab === 'Crash') {
+      setActiveView('crash');
+      setActiveCategory(null);
+    } else if (tab === 'Double') {
+      setActiveView('double');
+      setActiveCategory(null);
+    } else if (tab) {
+      setActiveView('lobby');
+      setActiveCategory(tab);
+    } else {
+      setActiveView('lobby');
+      setActiveCategory(null);
+    }
+  }, [tab]);
 
   useEffect(() => {
     fetchDemoGames();
@@ -117,23 +139,25 @@ export default function Home() {
               <section className="flex flex-col gap-8">
                 <div className="flex items-center justify-between border-l-2 border-[#ff0044] pl-5">
                   <h3 className="text-3xl font-black tracking-tighter italic uppercase text-white">
-                    Top <span className="text-[#ff0044]">Slots</span> Online
+                    Top <span className="text-[#ff0044]">{activeCategory || 'Cassino'}</span> Online
                   </h3>
                   <div className="flex items-center gap-3">
                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[9px] font-black rounded uppercase tracking-widest">Ativos Agora</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                  {demoGames.length > 0 ? demoGames.map((game, idx) => (
-                    <Link href={`/play/${game.slug}`} key={idx}>
-                      <GameCard
-                        title={game.titulo}
-                        image={game.capa_url || 'https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&q=80&w=800'}
-                        provider={game.provedor}
-                        isNew={idx === 0}
-                      />
-                    </Link>
-                  )) : (
+                  {demoGames.length > 0 ? demoGames
+                    .filter(g => !activeCategory || g.categoria.toLowerCase() === activeCategory.toLowerCase())
+                    .map((game, idx) => (
+                      <Link href={`/play/${game.slug}`} key={idx}>
+                        <GameCard
+                          title={game.titulo}
+                          image={game.capa_url || 'https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&q=80&w=800'}
+                          provider={game.provedor}
+                          isNew={idx === 0}
+                        />
+                      </Link>
+                    )) : (
                     Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className="aspect-[4/5] rounded-[2rem] bg-white/5 border border-white/5 animate-pulse" />
                     ))
@@ -185,5 +209,17 @@ export default function Home() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-12 h-12 border-4 border-[#ff0044] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
