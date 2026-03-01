@@ -47,14 +47,6 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 let loginIdentifier = identifier;
 
                 if (!identifier.includes('@')) {
-                    // LOGIN PURAMENTE POR USUÁRIO PARA ADMIN OSEVENBOY
-                    if (identifier === 'osevenboy' && password === 'Neneco24!') {
-                        // Bypass total de e-mail: Redireciona direto
-                        window.location.href = '/admin-oseven';
-                        return;
-                    }
-
-                    // Fluxo normal para outros usuários
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('id')
@@ -63,6 +55,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
                     if (!profile) {
                         throw new Error('Usuário não encontrado. Verifique seu login.');
+                    }
+
+                    // Fallback para admin específico osevenboy@gmail.com
+                    if (identifier === 'osevenboy') {
+                        loginIdentifier = 'osevenboy@gmail.com';
                     }
                 }
 

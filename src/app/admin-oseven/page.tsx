@@ -26,6 +26,14 @@ import { useRouter } from 'next/navigation';
 const AdminDashboard = () => {
     const { profile, user, isLoading } = useBalance();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && (!user || !profile?.is_admin)) {
+            // Se não estiver logado ou não for admin, volta pro início
+            router.push('/');
+        }
+    }, [user, profile, isLoading, router]);
+
     const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'games'>('stats');
 
     // Stats State
@@ -103,7 +111,13 @@ const AdminDashboard = () => {
         if (!error) fetchGames();
     };
 
-    if (isLoading) return <div className="p-10 text-white font-black italic">CARREGANDO SISTEMA CENTRAL...</div>;
+    if (isLoading) return (
+        <div className="fixed inset-0 bg-[#05070a] z-[100] flex items-center justify-center">
+            <div className="text-white font-black italic animate-pulse tracking-[0.3em] uppercase">CARREGANDO SISTEMA CENTRAL...</div>
+        </div>
+    );
+
+    if (!user || !profile?.is_admin) return null;
 
     return (
         <div className="flex flex-col gap-10 p-4 md:p-8 animate-in fade-in duration-700">
