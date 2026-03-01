@@ -51,6 +51,7 @@ const AdminDashboard = () => {
         iframeInput: ''
     });
     const [isAddingGame, setIsAddingGame] = useState(false);
+    const [isNativeGameMode, setIsNativeGameMode] = useState(false);
 
     useEffect(() => {
         const savedPin = localStorage.getItem('admin_master_pin');
@@ -124,6 +125,7 @@ const AdminDashboard = () => {
             alert('Jogo adicionado com sucesso!');
             setIsAddingGame(false);
             setNewGame({ titulo: '', provedor: provedoresUnicos[0] || '', capa_url: '', categoria: 'Slots', iframeInput: '' });
+            setIsNativeGameMode(false);
             setIsNovoProvedor(provedoresUnicos.length === 0);
             fetchGames();
         }
@@ -302,10 +304,50 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">CÓDIGO IFRAME OU URL DEMO</label>
-                                        <textarea required value={newGame.iframeInput} onChange={e => setNewGame({ ...newGame, iframeInput: e.target.value })} className="w-full h-[124px] bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white text-xs font-mono outline-none focus:border-[#ff004455]" placeholder='Cole o <iframe> aqui ou apenas a URL...' />
+                                    {/* SELETOR DE MODO NATIVO VS EXTERNO */}
+                                    <div className="space-y-4 pb-2 border-b border-white/5">
+                                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">INTEGRAÇÃO DO JOGO</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsNativeGameMode(false)}
+                                                className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-black uppercase italic transition-all ${!isNativeGameMode ? 'border-[#ff0044] bg-[#ff004422] text-[#ff0044]' : 'border-white/10 text-gray-500 hover:border-white/30'}`}
+                                            >
+                                                Link Externo (Iframe)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsNativeGameMode(true);
+                                                    setNewGame(p => ({ ...p, iframeInput: 'INTERNAL_SUGAR_VDB', provedor: 'VouDeBet Originals' }));
+                                                }}
+                                                className={`p-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-black uppercase italic transition-all ${isNativeGameMode ? 'border-purple-500 bg-purple-500/20 text-purple-400' : 'border-white/10 text-gray-500 hover:border-white/30'}`}
+                                            >
+                                                Originals VOUDEBET
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    {isNativeGameMode ? (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-purple-400 font-black uppercase tracking-widest ml-2">SELECIONE O MOTOR (ENGINE)</label>
+                                            <select
+                                                required
+                                                value={newGame.iframeInput}
+                                                onChange={e => setNewGame({ ...newGame, iframeInput: e.target.value })}
+                                                className="w-full bg-[#0d121b] border border-purple-500/30 rounded-xl py-4 px-6 text-white font-bold outline-none border-r-[16px] border-r-transparent"
+                                            >
+                                                <option value="INTERNAL_SUGAR_VDB">Sugar VouDeBet (Slot 7x7)</option>
+                                                {/* Futuros engines aqui: crash, double, etc */}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">CÓDIGO IFRAME OU URL DEMO</label>
+                                            <textarea required value={newGame.iframeInput} onChange={e => setNewGame({ ...newGame, iframeInput: e.target.value })} className="w-full h-[124px] bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white text-xs font-mono outline-none focus:border-[#ff004455]" placeholder='Cole o <iframe> aqui ou apenas a URL...' />
+                                        </div>
+                                    )}
+
                                     <div className="space-y-2">
                                         <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">URL DA CAPA (OPCIONAL)</label>
                                         <input value={newGame.capa_url} onChange={e => setNewGame({ ...newGame, capa_url: e.target.value })} className="w-full bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white font-bold outline-none focus:border-[#ff004455]" placeholder="Link da imagem..." />
