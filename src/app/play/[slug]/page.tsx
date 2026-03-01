@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import SugarSlot from '@/components/SugarSlot';
 
 const PlayGame = () => {
     const { slug } = useParams();
@@ -80,16 +81,22 @@ const PlayGame = () => {
                 </div>
             </div>
 
-            {/* Game Iframe Container */}
-            <div className="relative aspect-video w-full max-h-[750px] bg-[#05070a] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
-                <iframe
-                    src={game.iframe_url}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allowFullScreen
-                    scrolling="no"
-                />
-            </div>
+            {/* Game Iframe Container or Custom React Slot */}
+            {game.iframe_url === 'INTERNAL_SUGAR_VDB' ? (
+                <div className="w-full bg-[#05070a] rounded-[2.5rem] border border-[#ff004433] overflow-hidden shadow-[0_0_50px_rgba(255,0,68,0.1)] py-10">
+                    <SugarSlot />
+                </div>
+            ) : (
+                <div className="relative aspect-video w-full max-h-[750px] bg-[#05070a] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+                    <iframe
+                        src={game.iframe_url}
+                        className="w-full h-full"
+                        frameBorder="0"
+                        allowFullScreen
+                        scrolling="no"
+                    />
+                </div>
+            )}
 
             {/* Game Footer / Info */}
             <div className="grid md:grid-cols-3 gap-6">
