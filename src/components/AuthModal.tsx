@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, ShieldCheck } from 'lucide-react';
+import Logo from './Logo';
 import { supabase } from '@/lib/supabase';
 
 interface AuthModalProps {
@@ -83,123 +84,143 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 sm:p-4 overflow-y-auto overflow-x-hidden">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Dark Backdrop */}
-            <div className="fixed inset-0 bg-[#05070a]/95 backdrop-blur-md" onClick={onClose} />
+            <div className="fixed inset-0 bg-[#000000bc] backdrop-blur-[2px]" onClick={onClose} />
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-lg bg-[#0d121b] border border-white/5 rounded-[3rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-500">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#ff0044] to-transparent shadow-[0_0_15px_#ff0044]" />
-
+            <div className="relative w-full max-w-[420px] bg-[#1a242d] border border-white/5 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
                 <button
                     onClick={onClose}
-                    className="absolute top-8 right-8 p-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
+                    className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white transition-colors z-10"
                 >
-                    <X size={24} />
+                    <X size={20} />
                 </button>
 
-                <div className="p-12 sm:p-14">
-                    <div className="flex flex-col items-center mb-12">
-                        <div className="w-20 h-20 rounded-3xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] mb-6 border border-[#ff004433] shadow-[inset_0_0_20px_#ff004411]">
-                            <ShieldCheck size={40} />
+                <div className="p-8">
+                    {/* Logo & Title */}
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="text-[#f12c4c] mb-6">
+                            <Logo />
                         </div>
-                        <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white text-center leading-tight">
-                            {mode === 'login' ? 'ENTRAR NA' : 'CRIAR MINHA'} <br /> <span className="text-[#ff0044]">VOUDEBET</span>
+                        <h2 className="text-xl font-bold text-white tracking-tight">
+                            {mode === 'login' ? 'Faça login em sua conta' : 'Crie sua conta na VouDeBet'}
                         </h2>
-                        <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] mt-4 px-6 text-center italic">
-                            {mode === 'login' ? 'Acesso restrito para apostadores de elite' : 'Cadastre-se para liberar bônus de 100%'}
-                        </p>
                     </div>
 
-                    <form onSubmit={handleAuth} className="space-y-5">
+                    <form onSubmit={handleAuth} className="space-y-4">
                         {mode === 'register' ? (
                             <>
-                                <div className="relative group">
-                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff0044] transition-colors" size={20} />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">Nome Completo</label>
                                     <input
                                         type="text"
-                                        placeholder="NOME COMPLETO"
+                                        placeholder="Nome Completo"
                                         required
                                         value={fullName}
                                         onChange={(e) => setFullName(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-white placeholder:text-gray-700 focus:border-[#ff004433] focus:bg-white/[0.07] transition-all outline-none"
+                                        className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
                                     />
                                 </div>
-                                <div className="relative group">
-                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff0044] transition-colors" size={20} />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">Usuário</label>
                                     <input
                                         type="text"
-                                        placeholder="NOME DE USUÁRIO"
+                                        placeholder="Usuário"
                                         required
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-white placeholder:text-gray-700 focus:border-[#ff004433] focus:bg-white/[0.07] transition-all outline-none"
+                                        className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
                                     />
                                 </div>
-                                <div className="relative group">
-                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff0044] transition-colors" size={20} />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">E-mail</label>
                                     <input
                                         type="email"
-                                        placeholder="E-MAIL"
+                                        placeholder="E-mail"
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-white placeholder:text-gray-700 focus:border-[#ff004433] focus:bg-white/[0.07] transition-all outline-none"
+                                        className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
                                     />
                                 </div>
                             </>
                         ) : (
-                            <div className="relative group">
-                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff0044] transition-colors" size={20} />
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">CPF Ou Endereço De Email</label>
                                 <input
-                                    type="text" // Change to text to allow username
-                                    placeholder="USUÁRIO OU E-MAIL"
+                                    type="text"
+                                    placeholder="CPF Ou Endereço De Email"
                                     required
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-white placeholder:text-gray-700 focus:border-[#ff004433] focus:bg-white/[0.07] transition-all outline-none"
+                                    className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
                                 />
                             </div>
                         )}
 
-                        <div className="relative group">
-                            <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff0044] transition-colors" size={20} />
-                            <input
-                                type="password"
-                                placeholder="SENHA"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-sm font-bold text-white placeholder:text-gray-700 focus:border-[#ff004433] focus:bg-white/[0.07] transition-all outline-none"
-                            />
+                        <div className="space-y-1">
+                            <label className="text-[10px] text-gray-500 font-bold uppercase ml-1">Senha</label>
+                            <div className="relative">
+                                <input
+                                    type="password"
+                                    placeholder="Senha"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-[#0f1923] border border-white/5 rounded-lg py-3.5 px-4 text-sm font-medium text-white placeholder:text-gray-600 focus:border-[#f12c4c55] transition-all outline-none"
+                                />
+                                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+                                    <ShieldCheck size={18} />
+                                </button>
+                            </div>
                         </div>
 
-                        {error && (
-                            <div className="p-4 rounded-xl bg-[#ff004411] border border-[#ff004422] animate-shake">
-                                <p className="text-[#ff0044] text-[10px] font-black text-center uppercase tracking-widest leading-relaxed">{error}</p>
+                        {mode === 'login' && (
+                            <div className="flex justify-start">
+                                <button type="button" className="text-[11px] text-gray-500 hover:text-white transition-colors">
+                                    Esqueci a minha senha
+                                </button>
                             </div>
+                        )}
+
+                        {error && (
+                            <p className="text-[#f12c4c] text-[10px] font-bold text-center uppercase tracking-widest">{error}</p>
                         )}
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#ff0044] text-white font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-[0.2em] italic text-sm"
+                            className="w-full bg-[#f12c4c] text-white font-bold py-4 rounded-lg shadow-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
                         >
-                            {isLoading ? 'SINCRONIZANDO...' : mode === 'login' ? 'ENTRAR NA CONTA' : 'FINALIZAR CADASTRO'}
+                            {isLoading ? 'CARREGANDO...' : (
+                                <>
+                                    {mode === 'login' ? 'Entrar' : 'Cadastrar'}
+                                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                </>
+                            )}
                         </button>
                     </form>
 
-                    <div className="mt-10 text-center">
-                        <button
-                            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                            className="group text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-                        >
-                            {mode === 'login' ? (
-                                <>Ainda não tem conta? <span className="text-[#ff0044] group-hover:underline underline-offset-4 decoration-2">CADASTRE-SE</span></>
-                            ) : (
-                                <>Já é um apostador? <span className="text-[#ff0044] group-hover:underline underline-offset-4 decoration-2">FAZER LOGIN</span></>
-                            )}
-                        </button>
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-white/5"></div>
+                        </div>
+                        <div className="relative flex justify-center text-[10px] font-bold uppercase">
+                            <span className="bg-[#1a242d] px-4 text-gray-600">OU</span>
+                        </div>
+                    </div>
+
+                    <div className="text-center">
+                        <p className="text-xs text-gray-500">
+                            {mode === 'login' ? 'Não tem uma conta ainda?' : 'Já possui uma conta?'}
+                            <button
+                                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                                className="text-[#f12c4c] hover:underline ml-1 font-bold"
+                            >
+                                {mode === 'login' ? 'Crie uma agora!' : 'Faça login!'}
+                            </button>
+                        </p>
                     </div>
                 </div>
             </div>
