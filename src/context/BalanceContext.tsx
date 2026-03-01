@@ -7,6 +7,11 @@ import { Profile } from '@/types/database';
 
 type BalanceType = 'real' | 'demo';
 
+interface ModalState {
+    open: boolean;
+    mode?: 'login' | 'register';
+}
+
 interface BalanceContextType {
     profile: Profile | null;
     currentType: BalanceType;
@@ -15,6 +20,14 @@ interface BalanceContextType {
     refreshBalance: () => Promise<void>;
     user: any | null;
     isAdmin: boolean;
+
+    // Modal Controls
+    authModal: ModalState;
+    setAuthModal: (state: ModalState) => void;
+    depositModal: boolean;
+    setDepositModal: (open: boolean) => void;
+    withdrawModal: boolean;
+    setWithdrawModal: (open: boolean) => void;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
@@ -24,6 +37,11 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<any | null>(null);
     const [currentType, setCurrentType] = useState<BalanceType>('real');
     const [isLoading, setIsLoading] = useState(true);
+
+    // Modal States
+    const [authModal, setAuthModal] = useState<ModalState>({ open: false, mode: 'login' });
+    const [depositModal, setDepositModal] = useState(false);
+    const [withdrawModal, setWithdrawModal] = useState(false);
 
     const fetchSession = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -82,7 +100,13 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 refreshBalance: async () => { if (user) await fetchProfile(user.id); },
                 user,
-                isAdmin: profile?.is_admin || false
+                isAdmin: profile?.is_admin || false,
+                authModal,
+                setAuthModal,
+                depositModal,
+                setDepositModal,
+                withdrawModal,
+                setWithdrawModal
             }}
         >
             {children}

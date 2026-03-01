@@ -6,7 +6,10 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
-import { BalanceProvider } from "@/context/BalanceContext";
+import AuthModal from "@/components/AuthModal";
+import DepositModal from "@/components/DepositModal";
+import WithdrawModal from "@/components/WithdrawModal";
+import { BalanceProvider, useBalance } from "@/context/BalanceContext";
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -15,6 +18,24 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const inter = Inter({ subsets: ["latin"] });
+
+// Modal Controller component to access useBalance inside the provider
+const ModalController = () => {
+  const { authModal, setAuthModal, depositModal, setDepositModal, withdrawModal, setWithdrawModal } = useBalance();
+
+  return (
+    <>
+      <AgeVerificationModal />
+      <AuthModal
+        isOpen={authModal.open}
+        onClose={() => setAuthModal({ ...authModal, open: false })}
+        initialMode={authModal.mode}
+      />
+      <DepositModal isOpen={depositModal} onClose={() => setDepositModal(false)} />
+      <WithdrawModal isOpen={withdrawModal} onClose={() => setWithdrawModal(false)} />
+    </>
+  );
+}
 
 export default function RootLayout({
   children,
@@ -31,7 +52,9 @@ export default function RootLayout({
       </head>
       <body className={cn(inter.className, "min-h-screen relative overflow-x-hidden")}>
         <BalanceProvider>
-          <AgeVerificationModal />
+          {/* Render modals at body level, outside any transformed containers */}
+          <ModalController />
+
           <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
           <div className={cn(
             "transition-all duration-300 min-h-screen",

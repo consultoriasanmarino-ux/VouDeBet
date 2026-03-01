@@ -3,17 +3,20 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Bell, Wallet, UserCircle, LogOut, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { useBalance } from '@/context/BalanceContext';
-import AuthModal from './AuthModal';
-import DepositModal from './DepositModal';
-import WithdrawModal from './WithdrawModal';
 import { supabase } from '@/lib/supabase';
 
 const Header = () => {
-    const { profile, currentType, setBalanceType, user, isLoading } = useBalance();
+    const {
+        profile,
+        currentType,
+        setBalanceType,
+        user,
+        setAuthModal,
+        setDepositModal,
+        setWithdrawModal
+    } = useBalance();
+
     const [showProfile, setShowProfile] = useState(false);
-    const [authModal, setAuthModal] = useState<{ open: boolean, mode: 'login' | 'register' }>({ open: false, mode: 'login' });
-    const [depositOpen, setDepositOpen] = useState(false);
-    const [withdrawOpen, setWithdrawOpen] = useState(false);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -23,7 +26,7 @@ const Header = () => {
     return (
         <header className="fixed top-0 left-0 h-20 w-full flex items-center justify-between px-8 bg-[#05070a]/80 backdrop-blur-xl border-b border-white/5 z-40 transition-all duration-300">
             <div className="flex-1 max-w-xl hidden lg:flex ml-72">
-                <div className="w-full bg-white/5 h-11 px-5 rounded-xl flex items-center gap-3 border border-white/5 focus-within:border-[#ff004455] transition-all">
+                <div className="w-full bg-white/5 h-11 px-5 rounded-xl flex items-center gap-3 border border-white/5 focus-within:border-[#f12c4c55] transition-all">
                     <span className="text-gray-500 text-sm font-medium">Pesquisar jogos ou provedores...</span>
                 </div>
             </div>
@@ -39,7 +42,7 @@ const Header = () => {
                         </button>
                         <button
                             onClick={() => setAuthModal({ open: true, mode: 'register' })}
-                            className="px-8 py-3 bg-[#ff0044] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(255,0,68,0.3)] hover:scale-105 active:scale-95 transition-all italic"
+                            className="px-8 py-3 bg-[#f12c4c] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(241,44,76,0.3)] hover:scale-105 active:scale-95 transition-all italic"
                         >
                             Cadastrar
                         </button>
@@ -62,8 +65,8 @@ const Header = () => {
                                 <ChevronDown size={16} />
                             </button>
                             <button
-                                onClick={() => setDepositOpen(true)}
-                                className="h-10 px-4 bg-[#ff0044] text-white font-black text-xs uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(255,0,68,0.4)] hover:shadow-[0_0_25px_rgba(255,0,68,0.6)] transition-all active:scale-95 italic"
+                                onClick={() => setDepositModal(true)}
+                                className="h-10 px-4 bg-[#f12c4c] text-white font-black text-xs uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(241,44,76,0.4)] hover:shadow-[0_0_25px_rgba(241,44,76,0.6)] transition-all active:scale-95 italic"
                             >
                                 Depositar
                             </button>
@@ -74,7 +77,7 @@ const Header = () => {
                                 onClick={() => setShowProfile(!showProfile)}
                                 className="flex items-center gap-2 p-1.5 pr-3 hover:bg-white/5 rounded-xl border border-transparent hover:border-white/5 transition-all group"
                             >
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ff0044] to-[#ff004455] flex items-center justify-center text-white font-bold shadow-lg uppercase">
+                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#f12c4c] to-[#f12c4c55] flex items-center justify-center text-white font-bold shadow-lg uppercase">
                                     {profile?.username?.[0] || 'U'}
                                 </div>
                                 <div className="hidden sm:flex flex-col items-start">
@@ -99,7 +102,7 @@ const Header = () => {
                                             <UserCircle size={18} /> Perfil
                                         </button>
                                         <button
-                                            onClick={() => { setWithdrawOpen(true); setShowProfile(false); }}
+                                            onClick={() => { setWithdrawModal(true); setShowProfile(false); }}
                                             className="flex items-center gap-3 w-full p-3 text-sm text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all"
                                         >
                                             <Wallet size={18} /> Sacar
@@ -107,7 +110,7 @@ const Header = () => {
                                         <div className="h-px bg-white/5 my-2" />
                                         <button
                                             onClick={handleLogout}
-                                            className="flex items-center gap-3 w-full p-3 text-sm text-[#ff0044] hover:bg-[#ff004411] rounded-xl transition-all font-bold"
+                                            className="flex items-center gap-3 w-full p-3 text-sm text-[#f12c4c] hover:bg-[#f12c4c11] rounded-xl transition-all font-bold"
                                         >
                                             <LogOut size={18} /> Encerrar Sessão
                                         </button>
@@ -118,14 +121,6 @@ const Header = () => {
                     </>
                 )}
             </div>
-
-            <AuthModal
-                isOpen={authModal.open}
-                onClose={() => setAuthModal({ ...authModal, open: false })}
-                initialMode={authModal.mode}
-            />
-            <DepositModal isOpen={depositOpen} onClose={() => setDepositOpen(false)} />
-            <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
         </header>
     );
 };
