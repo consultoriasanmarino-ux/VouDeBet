@@ -43,46 +43,31 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 });
                 if (error) throw error;
                 alert('Cadastro realizado! Verifique seu e-mail.');
-            } else {
+            } else { // mode === 'login'
                 let loginIdentifier = identifier;
 
                 if (!identifier.includes('@')) {
+                    // Usuário comum login via username (tentativa simples de converter para email padrão do App)
+                    const cleanIdentifier = identifier.trim().toLowerCase();
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('id')
-                        .eq('username', identifier)
+                        .select('email')
+                        .eq('username', cleanIdentifier)
                         .single();
 
                     if (!profile) {
-                        throw new Error('Usuário não encontrado. Verifique seu login.');
-                    }
-
-                    // Fallback para admin específico osevenboy@gmail.com
-                    if (identifier === 'osevenboy') {
-                        loginIdentifier = 'osevenboy@gmail.com';
+                        loginIdentifier = `${cleanIdentifier}@test.com`; // Assumindo padrão se não houver mapeamento
+                    } else {
+                        loginIdentifier = profile.email || `${cleanIdentifier}@test.com`;
                     }
                 }
 
-                const { data: authData, error } = await supabase.auth.signInWithPassword({
+                const { error } = await supabase.auth.signInWithPassword({
                     email: loginIdentifier,
                     password,
                 });
 
                 if (error) throw error;
-
-                // Redirecionamento se for admin (via banco)
-                if (authData.user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('is_admin')
-                        .eq('id', authData.user.id)
-                        .single();
-
-                    if (profile?.is_admin) {
-                        window.location.href = '/admin-oseven';
-                        return;
-                    }
-                }
             }
             onClose();
             window.location.reload();

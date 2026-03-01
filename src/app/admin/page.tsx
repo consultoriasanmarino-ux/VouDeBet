@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useBalance } from '@/context/BalanceContext';
 import {
     Users,
     TrendingUp,
@@ -24,16 +23,10 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 const AdminDashboard = () => {
-    const { profile, user, isLoading } = useBalance();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!isLoading && (!user || !profile?.is_admin)) {
-            // Se não estiver logado ou não for admin, volta pro início
-            router.push('/');
-        }
-    }, [user, profile, isLoading, router]);
-
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [pin, setPin] = useState('');
     const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'games'>('stats');
 
     // Stats State
@@ -56,8 +49,12 @@ const AdminDashboard = () => {
     const [isAddingGame, setIsAddingGame] = useState(false);
 
     useEffect(() => {
-        fetchAdminData();
-        fetchGames();
+        const savedPin = localStorage.getItem('admin_master_pin');
+        if (savedPin === '216504') {
+            setIsAuthenticated(true);
+            fetchAdminData();
+            fetchGames();
+        }
     }, []);
 
     const fetchAdminData = async () => {
@@ -73,6 +70,19 @@ const AdminDashboard = () => {
     const fetchGames = async () => {
         const { data, error } = await supabase.from('jogos_demo').select('*').order('created_at', { ascending: false });
         if (data) setGames(data);
+    };
+
+    const handlePinLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pin === '216504') {
+            setIsAuthenticated(true);
+            localStorage.setItem('admin_master_pin', '216504');
+            fetchAdminData();
+            fetchGames();
+        } else {
+            alert('Código incorreto!');
+            setPin('');
+        }
     };
 
     const extractIframeUrl = (input: string) => {
@@ -111,16 +121,48 @@ const AdminDashboard = () => {
         if (!error) fetchGames();
     };
 
-    if (isLoading) return (
-        <div className="fixed inset-0 bg-[#05070a] z-[100] flex items-center justify-center">
-            <div className="text-white font-black italic animate-pulse tracking-[0.3em] uppercase">CARREGANDO SISTEMA CENTRAL...</div>
-        </div>
-    );
+    const logOutAdmin = () => {
+        localStorage.removeItem('admin_master_pin');
+        setIsAuthenticated(false);
+        setPin('');
+    };
 
-    if (!user || !profile?.is_admin) return null;
+    if (!isAuthenticated) {
+        return (
+            <div className="fixed inset-0 bg-[#05070a] z-[99999] flex items-center justify-center p-4">
+                <form onSubmit={handlePinLogin} className="bg-[#0d121b] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8 w-full max-w-[360px] animate-in zoom-in-95 duration-300">
+                    <div className="flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-2xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004433] mb-6">
+                            <Lock size={32} />
+                        </div>
+                        <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Acesso Restrito</h2>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2">Central Master</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <input
+                            type="password"
+                            placeholder="Código"
+                            required
+                            maxLength={6}
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} // Apenas números
+                            className="w-full bg-[#1a242d] border border-white/10 rounded-2xl py-5 px-6 text-white font-black outline-none focus:border-[#ff004455] text-center tracking-[0.5em] text-2xl transition-all"
+                        />
+                        <button
+                            type="submit"
+                            className="w-full bg-[#ff0044] text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-widest italic shadow-[0_0_20px_rgba(255,0,68,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        >
+                            ACESSAR PAINEL
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex flex-col gap-10 p-4 md:p-8 animate-in fade-in duration-700">
+        <div className="flex flex-col gap-10 p-4 md:p-8 animate-in fade-in duration-700 relative z-50 bg-[#05070a] min-h-screen">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-10">
                 <div className="flex items-center gap-5">
@@ -129,24 +171,29 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                         <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">Central <span className="text-[#ff0044]">Master</span></h2>
-                        <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1 italic">Bem-vindo, {profile?.username || 'Admin'}</p>
+                        <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1 italic">Acesso Exclusivo</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
-                    {[
-                        { id: 'stats', label: 'Dashboard', icon: <Activity size={16} /> },
-                        { id: 'games', label: 'Gerenciar Jogos', icon: <Gamepad2 size={16} /> },
-                        { id: 'users', label: 'Usuários', icon: <Users size={16} /> }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#ff0044] text-white shadow-[0_0_15px_#ff0044]' : 'text-gray-500 hover:text-white'}`}
-                        >
-                            {tab.icon} {tab.label}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+                        {[
+                            { id: 'stats', label: 'Dashboard', icon: <Activity size={16} /> },
+                            { id: 'games', label: 'Gerenciar Jogos', icon: <Gamepad2 size={16} /> },
+                            { id: 'users', label: 'Usuários', icon: <Users size={16} /> }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#ff0044] text-white shadow-[0_0_15px_#ff0044]' : 'text-gray-500 hover:text-white'}`}
+                            >
+                                {tab.icon} {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                    <button onClick={logOutAdmin} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-gray-500 hover:text-white hover:bg-[#ff0044] hover:border-[#ff0044] transition-all">
+                        <ArrowDownLeft size={20} className="rotate-90" />
+                    </button>
                 </div>
             </div>
 
