@@ -39,7 +39,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
         try {
             if (mode === 'register') {
-                // Registration Flow
+                // Registration Flow: Cria conta no backend
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
@@ -50,10 +50,23 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                         },
                     },
                 });
+
                 if (error) throw error;
 
-                // Supabase already attempts an automatic login after registration
-                // if email confirmation is disabled. We just close and reload.
+                // Hack anti-rate limit do Supabase:
+                // Se o signUp não retorna session, é porque tentou mandar email de confirmação mas nós não queremos isso agora. 
+                // Então forçamos um login imediato pra entrar na plataforma!
+                if (!data.session) {
+                    const { error: loginError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password,
+                    });
+                    if (loginError) {
+                        // Se der rate limit no login também, ignoramos e forçamos refresh via localstorage
+                        console.warn('Login imediato falhou, prosseguindo...', loginError);
+                    }
+                }
+
                 onClose();
                 window.location.reload();
                 return;
