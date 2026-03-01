@@ -2,40 +2,89 @@
 
 import React from 'react';
 
-const Logo = ({ className = "w-10 h-10" }: { className?: string }) => {
+interface LogoProps {
+    className?: string;
+    showText?: boolean;
+    size?: number;
+}
+
+const Logo = ({ className = "", showText = true, size = 48 }: LogoProps) => {
     return (
-        <div className={`relative flex items-center gap-3 ${className}`}>
-            {/* The "V" with Lightning Icon */}
-            <div className="relative w-10 h-10 flex-shrink-0">
-                <svg viewBox="0 0 100 100" className="w-full h-full filter drop-shadow-[0_0_8px_rgba(255,0,68,0.8)]">
-                    {/* Main "V" structure */}
+        <div className={`flex items-center gap-4 ${className}`}>
+            {/* The Stylized "V" Neon Icon - EXACT MATCH TO SECOND IMAGE */}
+            <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+                <svg viewBox="0 0 120 120" className="w-full h-full filter drop-shadow-[0_0_15px_rgba(241,44,76,0.7)]">
+                    {/* Dark Background Base for the V */}
                     <path
-                        d="M10 20 L40 85 L50 85 L80 20 L70 20 L45 70 L20 20 Z"
-                        fill="#ff0044"
-                        className="animate-pulse"
+                        d="M20 20 L55 100 L65 100 L100 20"
+                        stroke="#1a1a1a"
+                        strokeWidth="14"
+                        fill="none"
+                        strokeLinejoin="round"
                     />
+
+                    {/* Main Neon Red "V" Outline */}
                     <path
-                        d="M15 15 L45 80 L55 80 L85 15 L75 15 L50 75 L25 15 Z"
-                        fill="white"
-                        fillOpacity="0.1"
-                    />
-                    {/* Lightning Bolt */}
-                    <path
-                        d="M45 35 L60 35 L40 55 L55 55 L35 75"
-                        stroke="#ff0044"
+                        d="M20 20 L55 100 L65 100 L100 20"
+                        stroke="#f12c4c"
                         strokeWidth="4"
                         fill="none"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="filter drop-shadow-[0_0_5px_rgba(255,0,68,1)]"
+                        className="drop-shadow-[0_0_8px_#f12c4c]"
+                    />
+
+                    {/* Inner Neon Red Glow Layer */}
+                    <path
+                        d="M25 22 L58 95 L62 95 L95 22"
+                        stroke="#f12c4c"
+                        strokeWidth="2"
+                        fill="none"
+                        className="opacity-50 blur-[1px]"
+                    />
+
+                    {/* Gray "Straps" from image */}
+                    <path
+                        d="M15 35 L35 35 L50 70 L30 70 Z"
+                        fill="#4a5568"
+                        className="opacity-90"
+                    />
+                    <path
+                        d="M105 35 L85 35 L70 70 L90 70 Z"
+                        fill="#4a5568"
+                        className="opacity-90"
+                    />
+
+                    {/* Central Lightning Bolt - White Neon */}
+                    <path
+                        d="M52 40 L70 40 L50 65 L68 65 L45 90"
+                        stroke="white"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+                    />
+
+                    {/* Red Core on Bolt */}
+                    <path
+                        d="M55 43 L65 43 L52 62 L62 62 L48 85"
+                        stroke="#f12c4c"
+                        strokeWidth="1"
+                        fill="none"
+                        className="animate-pulse"
                     />
                 </svg>
             </div>
 
             {/* VOU DE BET Text Styling */}
-            <span className="text-xl font-black italic tracking-[0.2em] text-white uppercase flex items-center">
-                VOU <span className="text-[#ff0044] ml-2">DE</span> <span className="ml-2">BET</span>
-            </span>
+            {showText && (
+                <div className="flex items-center leading-none">
+                    <span className="text-3xl font-black italic tracking-tighter text-white uppercase whitespace-nowrap">
+                        VOU <span className="text-[#f12c4c] mx-1">DE</span> BET
+                    </span>
+                </div>
+            )}
         </div>
     );
 };
