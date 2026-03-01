@@ -16,7 +16,7 @@ const Logo = ({ className = "", showText = true, size = 160 }: LogoProps) => {
         <div className={`flex items-center ${className}`}>
             <div className="relative flex-shrink-0" style={{ width: size, height: size / 3 }}>
                 <Image
-                    src="/assets/logo.png"
+                    src="/assets/logo_semfundo.png"
                     alt="VouDeBet Logo"
                     fill
                     className="object-contain"
