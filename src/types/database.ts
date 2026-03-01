@@ -30,3 +30,14 @@ export type Bet = {
     is_demo: boolean;
     created_at: string;
 };
+
+export type DemoGame = {
+    id: string;
+    titulo: string;
+    provedor: string | null;
+    slug: string;
+    iframe_url: string;
+    capa_url: string | null;
+    categoria: string | null;
+    created_at: string;
+};
