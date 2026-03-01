@@ -75,8 +75,8 @@ const Sidebar = ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }
             )}
         >
             {/* Sidebar Branding */}
-            <div className="h-20 flex items-center justify-between px-6 border-b border-white/5 shrink-0 overflow-hidden">
-                <Logo size={isOpen ? 32 : 36} showText={isOpen} />
+            <div className="h-20 flex items-center justify-between px-4 border-b border-white/5 shrink-0 overflow-hidden">
+                <Logo size={isOpen ? 180 : 40} />
                 {isOpen && (
                     <button onClick={onToggle} className="p-2 hover:bg-white/5 rounded-lg text-gray-500 transition-colors">
                         <ChevronLeft size={20} />
