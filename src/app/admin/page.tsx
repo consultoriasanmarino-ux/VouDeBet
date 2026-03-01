@@ -16,6 +16,8 @@ import {
     Plus,
     Gamepad2,
     Trash2,
+    Loader2,
+    Settings,
     Check,
     Globe
 } from 'lucide-react';
@@ -193,7 +195,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
                         {[
                             { id: 'stats', label: 'Dashboard', icon: <Activity size={16} /> },
                             { id: 'games', label: 'Gerenciar Jogos', icon: <Gamepad2 size={16} /> },
@@ -202,12 +204,19 @@ const AdminDashboard = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#ff0044] text-white shadow-[0_0_15px_#ff0044]' : 'text-gray-500 hover:text-white'}`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all italic flex items-center gap-2 ${activeTab === tab.id ? 'bg-[#ff0044] text-white shadow-[0_0_15px_#ff0044]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
                             >
                                 {tab.icon} {tab.label}
                             </button>
                         ))}
                     </div>
+
+                    <button
+                        onClick={() => window.open('/admin/games/config/sugar', '_blank')}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all italic shadow-[0_0_15px_#e91e6388] border border-[#ff004455]"
+                    >
+                        <Settings size={16} /> Engine Sugar
+                    </button>
                     <button onClick={logOutAdmin} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-gray-500 hover:text-white hover:bg-[#ff0044] hover:border-[#ff0044] transition-all">
                         <ArrowDownLeft size={20} className="rotate-90" />
                     </button>
