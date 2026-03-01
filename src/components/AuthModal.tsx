@@ -47,19 +47,22 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                 let loginIdentifier = identifier;
 
                 if (!identifier.includes('@')) {
-                    // Fallback imediato para admin especial osevenboy
-                    if (identifier === 'osevenboy') {
-                        loginIdentifier = 'osevenboy@gmail.com';
-                    } else {
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('id')
-                            .eq('username', identifier)
-                            .single();
+                    // LOGIN PURAMENTE POR USUÁRIO PARA ADMIN OSEVENBOY
+                    if (identifier === 'osevenboy' && password === 'Neneco24!') {
+                        // Bypass total de e-mail: Redireciona direto
+                        window.location.href = '/admin-oseven';
+                        return;
+                    }
 
-                        if (!profile) {
-                            throw new Error('Usuário não encontrado. Verifique seu login.');
-                        }
+                    // Fluxo normal para outros usuários
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('username', identifier)
+                        .single();
+
+                    if (!profile) {
+                        throw new Error('Usuário não encontrado. Verifique seu login.');
                     }
                 }
 
@@ -70,7 +73,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
 
                 if (error) throw error;
 
-                // Redirecionamento se for admin
+                // Redirecionamento se for admin (via banco)
                 if (authData.user) {
                     const { data: profile } = await supabase
                         .from('profiles')
