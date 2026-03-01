@@ -36,7 +36,7 @@ function cn(...inputs: ClassValue[]) {
 
 const Sidebar = ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) => {
     const pathname = usePathname();
-    const { profile, isAdmin } = useBalance();
+    const { profile, isAdmin, user } = useBalance();
     const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({ originals: true, casino: false });
 
     const toggleMenu = (key: string) => {
@@ -155,25 +155,27 @@ const Sidebar = ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }
             </div>
 
             {/* Footer Profile Toggle */}
-            <div className="p-4 border-t border-white/5">
-                <Link
-                    href="/profile"
-                    className={cn(
-                        "flex items-center gap-4 p-3 rounded-xl transition-all",
-                        pathname === '/profile' ? "bg-white/5 text-white" : "text-gray-500 hover:text-white"
-                    )}
-                >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ff0044] to-[#ff004455] shrink-0 flex items-center justify-center text-white font-black text-xs uppercase italic border border-white/10 shadow-lg">
-                        {profile?.username?.[0] || 'U'}
-                    </div>
-                    {isOpen && (
-                        <div className="flex flex-col overflow-hidden">
-                            <span className="text-[11px] font-black text-white italic truncate uppercase">{profile?.username || 'PERFIL'}</span>
-                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Configurações</span>
+            {user && (
+                <div className="p-4 border-t border-white/5">
+                    <Link
+                        href="/profile"
+                        className={cn(
+                            "flex items-center gap-4 p-3 rounded-xl transition-all",
+                            pathname === '/profile' ? "bg-white/5 text-white" : "text-gray-500 hover:text-white"
+                        )}
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ff0044] to-[#ff004455] shrink-0 flex items-center justify-center text-white font-black text-xs uppercase italic border border-white/10 shadow-lg">
+                            {profile?.username?.[0] || 'U'}
                         </div>
-                    )}
-                </Link>
-            </div>
+                        {isOpen && (
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="text-[11px] font-black text-white italic truncate uppercase">{profile?.username || 'PERFIL'}</span>
+                                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Configurações</span>
+                            </div>
+                        )}
+                    </Link>
+                </div>
+            )}
         </aside>
     );
 };
