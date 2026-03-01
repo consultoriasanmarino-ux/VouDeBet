@@ -22,6 +22,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
+    // Sincronizar aba ativa quando abre pelo Header
+    React.useEffect(() => {
+        if (isOpen) {
+            setMode(initialMode);
+            setError(null);
+        }
+    }, [isOpen, initialMode]);
+
     if (!isOpen) return null;
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -42,7 +50,13 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) =
                     },
                 });
                 if (error) throw error;
-                alert('Cadastro realizado! Verifique seu e-mail.');
+
+                // Força o login após cadastro caso o "Confirm email" esteja desligado no Supabase
+                const { error: loginError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (loginError) throw loginError;
             } else { // mode === 'login'
                 let loginIdentifier = identifier;
 

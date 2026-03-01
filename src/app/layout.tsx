@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Inter } from "next/font/google";
+import { usePathname } from 'next/navigation';
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -43,6 +44,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith('/admin') ?? false;
 
   return (
     <html lang="pt-BR" className="bg-[#0f1923] text-gray-100 antialiased selection:bg-[#f12c4c] selection:text-white">
@@ -55,13 +58,17 @@ export default function RootLayout({
           {/* Render modals at body level, outside any transformed containers */}
           <ModalController />
 
-          <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+          {!isAdmin && <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />}
+
           <div className={cn(
             "transition-all duration-300 min-h-screen",
-            isSidebarOpen ? "ml-64" : "ml-20"
+            isAdmin ? "w-full" : (isSidebarOpen ? "ml-64" : "ml-20")
           )}>
-            <Header />
-            <main className="pt-24 pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto overflow-hidden">
+            {!isAdmin && <Header />}
+            <main className={cn(
+              "pb-12 px-6 max-w-[1600px] mx-auto overflow-hidden",
+              isAdmin ? "pt-0 lg:px-0 max-w-none px-0" : "pt-24 lg:px-12"
+            )}>
               {children}
             </main>
           </div>

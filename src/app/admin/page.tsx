@@ -39,6 +39,8 @@ const AdminDashboard = () => {
 
     // Games State
     const [games, setGames] = useState<any[]>([]);
+    const [provedoresUnicos, setProvedoresUnicos] = useState<string[]>([]);
+    const [isNovoProvedor, setIsNovoProvedor] = useState(false);
     const [newGame, setNewGame] = useState({
         titulo: '',
         provedor: '',
@@ -69,7 +71,16 @@ const AdminDashboard = () => {
 
     const fetchGames = async () => {
         const { data, error } = await supabase.from('jogos_demo').select('*').order('created_at', { ascending: false });
-        if (data) setGames(data);
+        if (data) {
+            setGames(data);
+            const providers = Array.from(new Set(data.map(g => g.provedor).filter(Boolean))) as string[];
+            setProvedoresUnicos(providers);
+            if (providers.length === 0) {
+                setIsNovoProvedor(true);
+            } else if (!newGame.provedor) {
+                setNewGame(prev => ({ ...prev, provedor: providers[0] }));
+            }
+        }
     };
 
     const handlePinLogin = (e: React.FormEvent) => {
@@ -110,7 +121,8 @@ const AdminDashboard = () => {
         } else {
             alert('Jogo adicionado com sucesso!');
             setIsAddingGame(false);
-            setNewGame({ titulo: '', provedor: '', capa_url: '', categoria: 'Slots', iframeInput: '' });
+            setNewGame({ titulo: '', provedor: provedoresUnicos[0] || '', capa_url: '', categoria: 'Slots', iframeInput: '' });
+            setIsNovoProvedor(provedoresUnicos.length === 0);
             fetchGames();
         }
     };
@@ -238,7 +250,32 @@ const AdminDashboard = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">PROVEDOR</label>
-                                        <input required value={newGame.provedor} onChange={e => setNewGame({ ...newGame, provedor: e.target.value })} className="w-full bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white font-bold outline-none focus:border-[#ff004455]" placeholder="Ex: PG Soft" />
+                                        {!isNovoProvedor && provedoresUnicos.length > 0 ? (
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={newGame.provedor}
+                                                    onChange={e => {
+                                                        if (e.target.value === 'NOVO_PROVEDOR') {
+                                                            setIsNovoProvedor(true);
+                                                            setNewGame({ ...newGame, provedor: '' });
+                                                        } else {
+                                                            setNewGame({ ...newGame, provedor: e.target.value });
+                                                        }
+                                                    }}
+                                                    className="flex-1 bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white font-bold outline-none border-r-[16px] border-r-transparent"
+                                                >
+                                                    {provedoresUnicos.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                                                    <option value="NOVO_PROVEDOR" className="text-[#ff0044] font-black italic">+ ADICIONAR NOVO...</option>
+                                                </select>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <input required value={newGame.provedor} onChange={e => setNewGame({ ...newGame, provedor: e.target.value })} className="flex-1 bg-[#0d121b] border border-white/10 rounded-xl py-4 px-6 text-white font-bold outline-none focus:border-[#ff004455]" placeholder="Digite o nome do provedor..." />
+                                                {provedoresUnicos.length > 0 && (
+                                                    <button type="button" onClick={() => { setIsNovoProvedor(false); setNewGame({ ...newGame, provedor: provedoresUnicos[0] || '' }); }} className="px-6 bg-white/5 border border-white/10 rounded-xl text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">VOLTAR</button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-2">CATEGORIA</label>
