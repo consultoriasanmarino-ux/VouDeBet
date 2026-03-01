@@ -2,82 +2,86 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
+import { profileService } from '@/services/profileService';
+import { Profile } from '@/types/database';
 
 type BalanceType = 'real' | 'demo';
 
 interface BalanceContextType {
-    balanceReal: number;
-    balanceDemo: number;
+    profile: Profile | null;
     currentType: BalanceType;
     setBalanceType: (type: BalanceType) => void;
     isLoading: boolean;
     refreshBalance: () => Promise<void>;
+    user: any | null;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 export function BalanceProvider({ children }: { children: ReactNode }) {
-    const [balanceReal, setBalanceReal] = useState(0);
-    const [balanceDemo, setBalanceDemo] = useState(1000); // Default demo balance
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [user, setUser] = useState<any | null>(null);
     const [currentType, setCurrentType] = useState<BalanceType>('real');
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchUserBalance = async () => {
-        try {
-            setIsLoading(true);
-            // For now, let's assume we're fetching for a dummy user or authenticated session
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user) {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('balance_real, balance_demo')
-                    .eq('id', user.id)
-                    .single();
-
-                if (data && !error) {
-                    setBalanceReal(data.balance_real);
-                    setBalanceDemo(data.balance_demo);
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching balance:', error);
-        } finally {
+    const fetchSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        if (session?.user) {
+            await fetchProfile(session.user.id);
+        } else {
+            setProfile(null);
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchUserBalance();
+    const fetchProfile = async (userId: string) => {
+        setIsLoading(true);
+        const data = await profileService.getProfile(userId);
+        setProfile(data);
+        setIsLoading(false);
+    };
 
-        // Subscribe to realtime updates for profiles table
-        const channel = supabase
-            .channel('schema-db-changes')
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'profiles' },
-                (payload) => {
-                    // If we had a mechanism to identify current user, check payload.new.id
-                    setBalanceReal(payload.new.balance_real);
-                    setBalanceDemo(payload.new.balance_demo);
-                }
-            )
-            .subscribe();
+    useEffect(() => {
+        fetchSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            setUser(session?.user ?? null);
+            if (session?.user) {
+                await fetchProfile(session.user.id);
+            } else {
+                setProfile(null);
+                setIsLoading(false);
+            }
+        });
 
         return () => {
-            supabase.removeChannel(channel);
+            subscription.unsubscribe();
         };
     }, []);
+
+    // Realtime profile updates
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const subscription = profileService.subscribeToProfile(user.id, (newProfile) => {
+            setProfile(newProfile);
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [user?.id]);
 
     return (
         <BalanceContext.Provider
             value={{
-                balanceReal,
-                balanceDemo,
+                profile,
                 currentType,
                 setBalanceType: setCurrentType,
                 isLoading,
-                refreshBalance: fetchUserBalance
+                refreshBalance: async () => { if (user) await fetchProfile(user.id); },
+                user
             }}
         >
             {children}

@@ -1,28 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import GameCard from '@/components/GameCard';
+import CrashGame from '@/components/CrashGame';
+import DoubleGame from '@/components/DoubleGame';
+import LiveBetFeed from '@/components/LiveBetFeed';
 import {
   Rocket,
-  CircleDot,
-  Grid3X3,
   Flame,
-  TrendingUp,
   ChevronRight,
   ShieldCheck,
   Zap,
   Star,
   Trophy,
-  History
+  History,
+  LayoutGrid,
+  Activity
 } from 'lucide-react';
 import { useBalance } from '@/context/BalanceContext';
 
 export default function Home() {
-  const { currentType } = useBalance();
+  const [activeView, setActiveView] = useState<'lobby' | 'crash' | 'double'>('lobby');
 
   const originalGames = [
-    { title: 'Crash Royal', image: 'https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=80&w=800', isNew: true, multiplier: '2.5x' },
-    { title: 'Double Neon', image: 'https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&q=80&w=800', multiplier: '14.0x' },
+    { title: 'Crash Royal', image: 'https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=80&w=800', isNew: true, multiplier: '2.5x', slug: 'crash' },
+    { title: 'Double Neon', image: 'https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&q=80&w=800', multiplier: '14.0x', slug: 'double' },
     { title: 'Cyber Mines', image: 'https://images.unsplash.com/photo-1596443686812-2f45229eebc3?auto=format&fit=crop&q=80&w=800' },
     { title: 'Electric Dice', image: 'https://images.unsplash.com/photo-1596728321064-3b475c9756a8?auto=format&fit=crop&q=80&w=800', multiplier: '98.0x' },
   ];
@@ -31,124 +33,133 @@ export default function Home() {
     { title: 'Fortune Tiger', image: 'https://images.unsplash.com/photo-1520610115053-ec5247fc8e4b?auto=format&fit=crop&q=80&w=800', isNew: true, provider: 'PG Soft' },
     { title: 'Gates of Olympus', image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=800', provider: 'Pragmatic Play' },
     { title: 'Sugar Rush', image: 'https://images.unsplash.com/photo-1581792902715-db12cdd443d1?auto=format&fit=crop&q=80&w=800', provider: 'Pragmatic Play' },
-    { title: 'Sweet Bonanza', image: 'https://images.unsplash.com/photo-1575224300306-1b8da3bb1d62?auto=format&fit=crop&q=80&w=800', provider: 'PG Soft' },
-    { title: 'The Dog House', image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&q=80&w=800', isNew: true },
-    { title: 'Wolf Gold', image: 'https://images.unsplash.com/photo-1589139267150-13f56ce26581?auto=format&fit=crop&q=80&w=800' },
   ];
 
   return (
-    <div className="flex flex-col gap-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      {/* Hero Cyber Banner Section */}
-      <section className="relative h-[440px] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl group">
-        <img
-          src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=2600"
-          alt="Banner"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110 opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#05070a] via-[#05070a88] to-transparent flex flex-col justify-center px-16 gap-8">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-[#ff004411] border border-[#ff004455] rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#ff0044] shadow-[0_0_15px_rgba(255,0,68,0.3)]">
-              <Trophy size={14} /> NOVO SISTEMA VOUDEBET
+    <div className="flex flex-col gap-12 animate-in fade-in duration-1000">
+      {/* Navigation Breadcrumbs */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => setActiveView('lobby')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'lobby' ? 'bg-[#ff0044] text-white shadow-[0_0_15px_#ff0044]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+        >
+          Lobby Principal
+        </button>
+        {activeView !== 'lobby' && (
+          <>
+            <ChevronRight size={14} className="text-gray-700" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#ff0044] italic">
+              {activeView === 'crash' ? 'Crash Game' : 'Double Roulette'}
+            </span>
+          </>
+        )}
+      </div>
+
+      {activeView === 'lobby' ? (
+        <>
+          {/* Hero Cyber Banner */}
+          <section className="relative h-[380px] rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl group">
+            <img
+              src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=2600"
+              alt="Banner"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-105 opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#05070a] via-[#05070a99] to-transparent flex flex-col justify-center px-16 gap-6">
+              <div className="flex items-center gap-3">
+                <div className="px-3 py-1 bg-[#ff004411] border border-[#ff004455] rounded-full text-[10px] font-black uppercase tracking-widest text-[#ff0044] shadow-[0_0_15px_rgba(255,0,68,0.3)]">
+                  <Trophy size={14} /> VIP CLUB
+                </div>
+              </div>
+
+              <h2 className="text-6xl font-black text-white leading-[1.1] max-w-2xl italic tracking-tighter">
+                DOMINE O <span className="text-[#ff0044] neon-text">MERCADO</span> <br />
+                DAS APOSTAS ELITE
+              </h2>
+
+              <p className="text-gray-400 max-w-md font-medium text-lg leading-relaxed">
+                Sinta a velocidade do PIX instantâneo e jogue os originais mais lucrativos.
+              </p>
+
+              <div className="flex items-center gap-5 mt-4">
+                <button onClick={() => setActiveView('crash')} className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] hover:scale-105 transition-all active:scale-95 italic">
+                  JOGAR AGORA
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-white/40 font-bold uppercase tracking-widest italic">
-              <History size={14} /> Versão 2.4.0
+          </section>
+
+          {/* Games Grid */}
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-12">
+              <section className="flex flex-col gap-8">
+                <div className="flex items-center justify-between border-l-2 border-[#ff0044] pl-5">
+                  <h3 className="text-3xl font-black tracking-tighter italic uppercase text-white">
+                    Originais <span className="text-[#ff0044]">VouDeBet</span>
+                  </h3>
+                  <button className="text-[10px] text-gray-600 font-black uppercase tracking-widest hover:text-white transition-colors italic">Ver Catálogo</button>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  {originalGames.map((game, idx) => (
+                    <div key={idx} onClick={() => game.slug && setActiveView(game.slug as any)}>
+                      <GameCard {...game} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="flex flex-col gap-8">
+                <div className="flex items-center gap-4 text-white">
+                  <h3 className="text-3xl font-black tracking-tighter italic uppercase">Top Slots</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-6">
+                  {slotGames.map((game, idx) => (
+                    <GameCard key={idx} {...game} />
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            {/* Live Feed Sidebar */}
+            <div className="lg:col-span-1 hidden lg:block">
+              <div className="sticky top-28 space-y-6">
+                <LiveBetFeed />
+
+                <div className="p-8 rounded-3xl bg-gradient-to-br from-[#ff004411] to-transparent border border-[#ff004433] relative overflow-hidden group">
+                  <Zap className="absolute -right-4 -bottom-4 text-[#ff004411] group-hover:scale-150 transition-transform duration-1000" size={120} />
+                  <h4 className="text-xl font-black text-white italic uppercase tracking-tight mb-2">Afiliado VIP</h4>
+                  <p className="text-gray-500 text-xs font-medium leading-relaxed mb-6">Convide amigos e ganhe 15% de cada aposta feita na plataforma.</p>
+                  <button className="w-full py-4 bg-white/5 border border-white/10 rounded-xl text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">Começar Agora</button>
+                </div>
+              </div>
             </div>
           </div>
-
-          <h2 className="text-6xl font-black text-white leading-tight max-w-2xl italic tracking-tighter">
-            CADA APOSTA É UMA <br />
-            <span className="text-[#ff0044] drop-shadow-[0_0_20px_rgba(255,0,68,0.5)]">ADRENALINA</span> ELÉTRICA
-          </h2>
-
-          <p className="text-gray-400 max-w-md font-medium text-lg leading-relaxed">
-            A maior tecnologia de cassino digital com saques instantâneos e segurança de nível militar.
-          </p>
-
-          <div className="flex items-center gap-5 mt-4">
-            <button className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] hover:shadow-[0_0_50px_rgba(255,0,68,0.6)] hover:scale-105 transition-all active:scale-95 italic">
-              Jogar Agora
-            </button>
-            <button className="px-12 py-5 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 transition-all italic">
-              Ver Detalhes
-            </button>
+        </>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-right-12 duration-700">
+          {activeView === 'crash' ? <CrashGame /> : <DoubleGame />}
+          <div className="mt-16">
+            <LiveBetFeed />
           </div>
         </div>
+      )}
 
-        {/* Animated Scan Line */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ff0044] to-transparent opacity-20 blur-sm animate-[scan_4s_linear_infinite]" />
-      </section>
-
-      {/* Originals Section */}
-      <section className="flex flex-col gap-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-1.5 h-8 bg-[#ff0044] rounded-full shadow-[0_0_15px_rgba(255,0,68,0.8)]" />
-            <h3 className="text-3xl font-black tracking-tighter italic uppercase text-white">
-              Originais <span className="text-[#ff0044]">VouDeBet</span>
-            </h3>
+      {/* Trust Badges */}
+      <div className="grid md:grid-cols-3 gap-8 pt-12 border-t border-white/5 pb-12">
+        {[
+          { icon: <Zap />, title: 'Saque Rápido', desc: 'Média de 30 segundos' },
+          { icon: <ShieldCheck />, title: '100% Seguro', desc: 'SSL & Blockchain' },
+          { icon: <Star />, title: 'Transparência', desc: 'Resultados SHA-256' }
+        ].map((item, idx) => (
+          <div key={idx} className="flex items-center gap-4 p-6 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004422]">
+              {item.icon}
+            </div>
+            <div>
+              <p className="text-white font-black uppercase text-sm italic">{item.title}</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{item.desc}</p>
+            </div>
           </div>
-          <button className="flex items-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] hover:text-[#ff0044] transition-colors group italic">
-            EXPLORAR CATALOGO
-            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {originalGames.map((game, idx) => (
-            <GameCard key={idx} {...game} />
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Slots Section */}
-      <section className="flex flex-col gap-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-1.5 h-8 bg-white/20 rounded-full" />
-            <h3 className="text-3xl font-black tracking-tighter italic uppercase text-white">Slots em Destaque</h3>
-          </div>
-          <button className="flex items-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] hover:text-white transition-colors group italic">
-            VER TODOS SLOTS
-            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {slotGames.map((game, idx) => (
-            <GameCard key={idx} {...game} />
-          ))}
-        </div>
-      </section>
-
-      {/* Footer Trust Section */}
-      <div className="grid md:grid-cols-3 gap-8 pt-20 border-t border-white/5">
-        <div className="flex flex-col gap-4 p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-[#ff004433] transition-all group">
-          <div className="w-14 h-14 rounded-2xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004433] group-hover:scale-110 transition-transform">
-            <Zap size={28} />
-          </div>
-          <div>
-            <p className="text-white font-black text-xl italic uppercase tracking-tight">PIX Instantâneo</p>
-            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">Sua conta em segundos</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-4 p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-[#ff004433] transition-all group">
-          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20 group-hover:scale-110 transition-transform">
-            <ShieldCheck size={28} />
-          </div>
-          <div>
-            <p className="text-white font-black text-xl italic uppercase tracking-tight">Segurança Total</p>
-            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">Criptografia Ponta-a-Ponta</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-4 p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-[#ff004433] transition-all group">
-          <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500 border border-green-500/20 group-hover:scale-110 transition-transform">
-            <Trophy size={28} />
-          </div>
-          <div>
-            <p className="text-white font-black text-xl italic uppercase tracking-tight">VIP Experience</p>
-            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">Cashback em cada aposta</p>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
