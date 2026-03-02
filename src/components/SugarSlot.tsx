@@ -164,6 +164,9 @@ export default function SugarSlot() {
                 accumulatedWin += step.stepWin;
                 setTotalWin(accumulatedWin);
 
+                // Força atualização do saldo global no contexto em tempo real após cada win
+                refreshBalance();
+
                 // 3. Remove os clusters da tela visualmente (viram zero)
                 const explodedGrid = step.grid.map(row => [...row]);
                 step.clusters.forEach(c => c.points.forEach(p => explodedGrid[p.r][p.c] = 0));
