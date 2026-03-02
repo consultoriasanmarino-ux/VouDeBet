@@ -47,19 +47,20 @@ function getRandomSymbol(config: GameConfig): SymbolID {
     // Multiplicador de suavidade do RTP
     const rtpFactor = config.rtp_level / 50;
 
-    // Ajuste de pesos para garantir que clusters de 5+ aconteçam com frequência real
-    // Reduzi a dispersão para agrupar mais símbolos iguais
-    let scatterWeight = config.payer_mode ? 15 : 1.5;
+    // Reduzi drasticamente o peso do Scatter (Foguete) para ser realista.
+    // 0.8 / ~95 = 0.8%. B(49, 0.008) -> ~0.39 scatters por giro (média). 
+    // Trigger de 3+ acontece 1x a cada ~140 giros (Padrão Slots).
+    let scatterWeight = config.payer_mode ? 5.0 : 0.8;
 
     const dynamicWeights = [
         { s: 1, w: scatterWeight },   // Rocket (Scatter)
-        { s: 2, w: 22 },  // Urso Laranja (Mais comum)
-        { s: 3, w: 20 },  // Urso Roxo
-        { s: 4, w: 18 },  // Urso Vermelho
-        { s: 5, w: 12 + (3 * rtpFactor) },  // Estrela Verde
-        { s: 6, w: 10 + (3 * rtpFactor) },  // Feijão Rosa
-        { s: 7, w: 6 + (4 * rtpFactor) },   // Coração Laranja
-        { s: 8, w: 3 + (6 * rtpFactor) },   // Pirulito Rosa (Mais valioso)
+        { s: 2, w: 25 },  // Laranja
+        { s: 3, w: 22 },  // Roxo
+        { s: 4, w: 18 },  // Vermelho
+        { s: 5, w: 12 + (3 * rtpFactor) },  // Estrela
+        { s: 6, w: 9 + (3 * rtpFactor) },   // Feijão
+        { s: 7, w: 5 + (4 * rtpFactor) },   // Coração
+        { s: 8, w: 2 + (6 * rtpFactor) },   // Pirulito
     ];
 
     const totalWeight = dynamicWeights.reduce((acc, curr) => acc + curr.w, 0);

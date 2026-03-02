@@ -56,11 +56,31 @@ export default function SugarSlot() {
     const [multipliers, setMultipliers] = useState<Record<number, number>>({});
     const [totalWin, setTotalWin] = useState(0);
 
-    // Free Spins State
+    // Free Spins State (Estado Persistente/Backend)
     const [fsLeft, setFsLeft] = useState(0);
     const [isBonusActive, setIsBonusActive] = useState(false);
     const [fsTotalWin, setFsTotalWin] = useState(0);
     const [showBonusTrigger, setShowBonusTrigger] = useState(false);
+    const [showBonusSummary, setShowBonusSummary] = useState(false);
+
+    // Refs para evitar closures obsoletas nas funções de animação/loop
+    const isBonusActiveRef = React.useRef(false);
+    const fsLeftRef = React.useRef(0);
+
+    // Auto-spin free spins
+    useEffect(() => {
+        if (isBonusActive && fsLeft > 0 && !isSpinning) {
+            const timer = setTimeout(() => {
+                spin();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+
+        // Fim do bonus
+        if (isBonusActive && fsLeft === 0 && !isSpinning && fsTotalWin > 0) {
+            setShowBonusSummary(true);
+        }
+    }, [isBonusActive, fsLeft, isSpinning]);
 
     const spin = async () => {
         if (!profile || isSpinning) return;
@@ -90,39 +110,36 @@ export default function SugarSlot() {
                 return;
             }
 
-            // Se for trigger de bônus
-            if (data.freeSpinsAwarded > 0 && !isBonusActive) {
+            // Logica de transição de bônus
+            const bonusRetrigger = data.freeSpinsAwarded > 0 && isBonusActiveRef.current;
+            const newBonusTrigger = data.freeSpinsAwarded > 0 && !isBonusActiveRef.current;
+
+            if (newBonusTrigger) {
                 setShowBonusTrigger(true);
                 await new Promise(r => setTimeout(r, 2500));
                 setShowBonusTrigger(false);
+
+                isBonusActiveRef.current = true;
                 setIsBonusActive(true);
             }
 
+            // Atualiza refs e estados com os dados reais do backend
             setFsLeft(data.fs_left || 0);
-            if (data.fs_left === 0 && isBonusActive) {
-                // Fim do bônus (será resetado no próximo spin ou aqui)
+            fsLeftRef.current = data.fs_left || 0;
+
+            if (isBonusActiveRef.current || data.freeSpinsAwarded > 0) {
+                setFsTotalWin(prev => prev + data.win);
             }
 
             // Anima Tumbles
             await animateTumbles(data.steps, data.win);
 
-            // Efeito de continuidade para Free Spins
-            if (data.fs_left > 0) {
-                setTimeout(() => {
-                    setIsSpinning(false); // Libera para o próximo auto-spin
-                    spin(); // Roda o próximo giro grátis
-                }, 1000);
-                return; // O finally vai rodar mas o spin recursivo cuida do resto
-            } else if (isBonusActive && data.fs_left === 0) {
-                setIsBonusActive(false);
-            }
-
-        } catch (err) {
-            console.error(err);
-            alert('Erro de conexão!');
-        } finally {
+            // A continuidade agora é tratada pelo useEffect
             setIsSpinning(false);
             refreshBalance(); // Atualiza saldo real na navbar
+        } catch (err) {
+            console.error(err);
+            setIsSpinning(false);
         }
     };
 
@@ -192,6 +209,29 @@ export default function SugarSlot() {
                     )}
                 </div>
             </div>
+
+            {/* Tela de Resumo do Bônus (Fim) */}
+            {showBonusSummary && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 backdrop-blur-xl animate-in fade-in duration-500">
+                    <div className="flex flex-col items-center gap-8 animate-in zoom-in-75 duration-500">
+                        <div className="w-24 h-24 rounded-full bg-pink-500 flex items-center justify-center shadow-[0_0_50px_rgba(233,30,99,0.5)]">
+                            <Trophy size={48} className="text-white" />
+                        </div>
+                        <div className="text-center">
+                            <h2 className="text-4xl font-black italic uppercase tracking-tighter text-gray-400">BONUS TOTAL WIN</h2>
+                            <p className="text-7xl font-black text-white italic tracking-tighter mt-2 drop-shadow-[0_0_20px_pink]">
+                                R$ {fsTotalWin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => { setShowBonusSummary(false); setIsBonusActive(false); setFsTotalWin(0); }}
+                            className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_#ff0044] hover:scale-105 transition-all"
+                        >
+                            CLOSE SUMMARY
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Banner de Bônus (Trigger) */}
             {showBonusTrigger && (
