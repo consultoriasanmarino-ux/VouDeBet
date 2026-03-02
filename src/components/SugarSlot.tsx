@@ -134,17 +134,41 @@ export default function SugarSlot() {
             // Anima Tumbles
             await animateTumbles(data.steps, data.win);
 
-            // A continuidade agora é tratada pelo useEffect
+            // Fim do bônus ou rodada normal limpa saldo local
             setIsSpinning(false);
-            refreshBalance(); // Atualiza saldo real na navbar
+            refreshBalance();
         } catch (err) {
             console.error(err);
             setIsSpinning(false);
         }
     };
 
+    const endBonus = async () => {
+        if (!profile) return;
+        try {
+            // Limpa multiplicadores do banco ao fechar o resumo do bônus (Padrão Pragmatic)
+            await fetch('/api/slot/clear-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: profile.id })
+            });
+
+            setShowBonusSummary(false);
+            setIsBonusActive(false);
+            isBonusActiveRef.current = false;
+            setFsTotalWin(0);
+            setMultipliers({}); // Limpa visualmente
+            refreshBalance();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const animateTumbles = async (steps: TumbleStep[], finalWin: number) => {
-        let accumulatedWin = 0;
+        // Se estiver no bônus, o 'accumulatedWin' inicia com o que já ganhou no bônus até agora
+        // Para mostrar o total acumulado subindo na tela.
+        let sessionWin = isBonusActive ? fsTotalWin : 0;
+        let roundAccumulated = 0;
 
         for (let i = 0; i < steps.length; i++) {
             const step = steps[i];
@@ -161,8 +185,8 @@ export default function SugarSlot() {
                 // Espera o jogador ver a vitória piscando
                 await new Promise(r => setTimeout(r, 600));
 
-                accumulatedWin += step.stepWin;
-                setTotalWin(accumulatedWin);
+                roundAccumulated += step.stepWin;
+                setTotalWin(sessionWin + roundAccumulated);
 
                 // Força atualização do saldo global no contexto em tempo real após cada win
                 refreshBalance();
@@ -227,7 +251,7 @@ export default function SugarSlot() {
                             </p>
                         </div>
                         <button
-                            onClick={() => { setShowBonusSummary(false); setIsBonusActive(false); setFsTotalWin(0); }}
+                            onClick={endBonus}
                             className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_#ff0044] hover:scale-105 transition-all"
                         >
                             CLOSE SUMMARY

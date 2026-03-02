@@ -43,20 +43,24 @@ export interface GameConfig {
 const ROWS = 7;
 const COLS = 7;
 
-function getRandomSymbol(config: GameConfig): SymbolID {
+function getRandomSymbol(config: GameConfig, excludeScatters: boolean = false): SymbolID {
     // Multiplicador de suavidade do RTP
     const rtpFactor = config.rtp_level / 50;
-    let scatterWeight = config.payer_mode ? 5.0 : 0.8;
+
+    // Se for um tumble (queda secundária), a chance de scatter é ZERO para evitar acúmulo infinito.
+    // No Sugar original, scatters são raros em tumbles ou inexistentes.
+    let scatterWeight = (config.payer_mode ? 5.0 : 0.8);
+    if (excludeScatters) scatterWeight = 0;
 
     const dynamicWeights = [
         { s: 1, w: scatterWeight },  // Rocket
-        { s: 2, w: 45 },             // Laranja (Muito comum para ligar)
+        { s: 2, w: 45 },             // Laranja
         { s: 3, w: 40 },             // Roxo
         { s: 4, w: 35 },             // Vermelho
         { s: 5, w: 15 + (5 * rtpFactor) },
         { s: 6, w: 12 + (5 * rtpFactor) },
         { s: 7, w: 8 + (8 * rtpFactor) },
-        { s: 8, w: 4 + (10 * rtpFactor) }, // Pirulito (Mais valioso)
+        { s: 8, w: 4 + (10 * rtpFactor) }, // Pirulito
     ];
 
     const totalWeight = dynamicWeights.reduce((acc, curr) => acc + curr.w, 0);
@@ -154,9 +158,9 @@ function dropSymbols(grid: SymbolID[][], clustersToExplode: Cluster[]): SymbolID
                 writeR--;
             }
         }
-        // Preenche o topo restante com novos símbolos aleatórios (Considerando os pesos da Config)
+        // Preenche o topo restante com novos símbolos aleatórios
         for (let r = writeR; r >= 0; r--) {
-            newGrid[r][c] = getRandomSymbol({ rtp_level: 50, payer_mode: false }); // Drop temporário padrão se n houver config global, mas vamos passar abaixo
+            newGrid[r][c] = getRandomSymbol({ rtp_level: 50, payer_mode: false }, true); // Exclui Scatters no tumble
         }
     }
 
@@ -185,7 +189,7 @@ function dropSymbolsConfig(grid: SymbolID[][], clustersToExplode: Cluster[], con
         }
         // Preenche o topo restante com novos símbolos aleatórios com base nos pesos RTP!
         for (let r = writeR; r >= 0; r--) {
-            newGrid[r][c] = getRandomSymbol(config);
+            newGrid[r][c] = getRandomSymbol(config, true); // EXCLUI SCATTERS NO TUMBLE
         }
     }
 
