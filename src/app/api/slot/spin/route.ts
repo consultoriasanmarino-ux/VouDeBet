@@ -37,23 +37,34 @@ export async function POST(req: Request) {
             .single();
 
         if (!session) {
-            const { data: newSession } = await supabase
+            const { data: newSession, error: sErr } = await supabase
                 .from('game_sessions')
-                .insert({ user_id: userId, game_slug: 'sugar_vdb' })
+                .insert({
+                    user_id: userId,
+                    game_slug: 'sugar_vdb',
+                    is_bonus_active: false,
+                    fs_left: 0,
+                    fs_max: 0,
+                    fs_total_win: 0
+                })
                 .select()
                 .single();
+
+            if (sErr) throw sErr;
             session = newSession;
         }
 
+        const isFreeSpin = session.is_bonus_active && session.fs_left > 0;
+
         // Se for um giro normal, a Pragmatic zera os multiplicadores da tela
-        // Se is_bonus_active (Free Spins) fosse true, manteríamos.
+        // Se is_bonus_active (Free Spins) for true, manteríamos os multiplicadores acumulando (Trail)
         let initialMultipliers: Record<number, number> = {};
 
-        if (bet > 0 && !session?.is_bonus_active) {
-            // Giro normal (Base Game) zera a mesa (Limpa do banco)
+        if (bet > 0 && !isFreeSpin) {
+            // Giro normal (Base Game) zera a mesa (Limpa do banco antes do start)
             await supabase.from('game_multipliers').delete().eq('session_id', session.id);
         } else {
-            // Se fosse free spin, ele carregaria o estado 
+            // Se for Free Spin ou um Tumble em andamento, carrega o estado persistente
             const { data: dbMultipliers } = await supabase
                 .from('game_multipliers')
                 .select('position_index, multiplier_value')
@@ -82,11 +93,35 @@ export async function POST(req: Request) {
         const spinData = playSpin(bet, initialMultipliers, gameConfig);
         const winAmount = spinData.totalWin;
 
-        // 4. ATUALIZA SALDO
+        // 4. ATUALIZA SALDO (Só desconta se não for Free Spin)
         let newBalance = currentBalance;
-        if (bet > 0) {
+        if (bet > 0 && !isFreeSpin) {
             newBalance = currentBalance - bet + winAmount;
             await supabase.from('profiles').update({ [balanceField]: newBalance }).eq('id', userId);
+        } else if (isFreeSpin) {
+            // Se for Free Spin, apenas soma o ganho
+            newBalance = currentBalance + winAmount;
+            await supabase.from('profiles').update({ [balanceField]: newBalance }).eq('id', userId);
+
+            // Atualiza contagem de Free Spins
+            const newFsLeft = session.fs_left - 1;
+            const newFsTotalWin = (session.fs_total_win || 0) + winAmount;
+
+            await supabase.from('game_sessions').update({
+                fs_left: newFsLeft,
+                fs_total_win: newFsTotalWin,
+                is_bonus_active: newFsLeft > 0
+            }).eq('id', session.id);
+        }
+
+        // Se ganhou Free Spins agora (Trigger)
+        if (spinData.freeSpinsAwarded > 0) {
+            await supabase.from('game_sessions').update({
+                is_bonus_active: true,
+                fs_left: (session.fs_left || 0) + spinData.freeSpinsAwarded,
+                fs_max: (session.fs_max || 0) + spinData.freeSpinsAwarded,
+                fs_total_win: session.fs_total_win || 0
+            }).eq('id', session.id);
         }
 
         // 5. ATUALIZA TRAIL (Multipliers no Banco)
@@ -119,7 +154,10 @@ export async function POST(req: Request) {
             win: winAmount,
             steps: spinData.steps,
             finalMultipliers: spinData.finalMultipliers,
-            s_mark: s_mark // Devolvendo trail
+            s_mark: s_mark,
+            freeSpinsAwarded: spinData.freeSpinsAwarded,
+            fs_left: isFreeSpin ? session.fs_left - 1 : (spinData.freeSpinsAwarded || 0),
+            is_bonus: spinData.freeSpinsAwarded > 0 || isFreeSpin
         });
 
     } catch (error: any) {

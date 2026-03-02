@@ -56,12 +56,21 @@ export default function SugarSlot() {
     const [multipliers, setMultipliers] = useState<Record<number, number>>({});
     const [totalWin, setTotalWin] = useState(0);
 
+    // Free Spins State
+    const [fsLeft, setFsLeft] = useState(0);
+    const [isBonusActive, setIsBonusActive] = useState(false);
+    const [fsTotalWin, setFsTotalWin] = useState(0);
+    const [showBonusTrigger, setShowBonusTrigger] = useState(false);
+
     const spin = async () => {
         if (!profile || isSpinning) return;
         setIsSpinning(true);
         setActiveClusters([]);
         setMultipliers({});
-        setTotalWin(0);
+        if (!isBonusActive) {
+            setTotalWin(0);
+            setFsTotalWin(0);
+        }
 
         try {
             const res = await fetch('/api/slot/spin', {
@@ -81,8 +90,32 @@ export default function SugarSlot() {
                 return;
             }
 
+            // Se for trigger de bônus
+            if (data.freeSpinsAwarded > 0 && !isBonusActive) {
+                setShowBonusTrigger(true);
+                await new Promise(r => setTimeout(r, 2500));
+                setShowBonusTrigger(false);
+                setIsBonusActive(true);
+            }
+
+            setFsLeft(data.fs_left || 0);
+            if (data.fs_left === 0 && isBonusActive) {
+                // Fim do bônus (será resetado no próximo spin ou aqui)
+            }
+
             // Anima Tumbles
             await animateTumbles(data.steps, data.win);
+
+            // Efeito de continuidade para Free Spins
+            if (data.fs_left > 0) {
+                setTimeout(() => {
+                    setIsSpinning(false); // Libera para o próximo auto-spin
+                    spin(); // Roda o próximo giro grátis
+                }, 1000);
+                return; // O finally vai rodar mas o spin recursivo cuida do resto
+            } else if (isBonusActive && data.fs_left === 0) {
+                setIsBonusActive(false);
+            }
 
         } catch (err) {
             console.error(err);
@@ -140,22 +173,51 @@ export default function SugarSlot() {
                 <p className="text-gray-400 font-black uppercase tracking-widest text-xs mt-2">✨ Exclusive Custom Engine V1.0 ✨</p>
 
                 {/* Score Board de Vitória */}
-                <div className="h-20 mt-6 flex items-center justify-center">
+                <div className="h-24 mt-6 flex items-center justify-center">
                     {totalWin > 0 && (
                         <div className="flex flex-col items-center animate-in zoom-in-95 duration-300">
                             <span className="text-[#ff0044] font-black uppercase text-xl italic tracking-widest flex items-center gap-2">
-                                <Trophy size={20} /> SWEET WIN!
+                                <Trophy size={20} /> {isBonusActive ? 'BONUS WIN' : 'SWEET WIN!'}
                             </span>
                             <span className="text-5xl font-black text-white italic tracking-tighter">
                                 R$ {totalWin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </span>
                         </div>
                     )}
+                    {isBonusActive && fsLeft > 0 && totalWin === 0 && (
+                        <div className="flex flex-col items-center animate-pulse">
+                            <span className="text-pink-500 font-black text-2xl italic uppercase tracking-tighter">FREE SPINS ACTIVATED</span>
+                            <span className="text-sm text-gray-400 font-bold uppercase tracking-widest">LUCK IS IN THE AIR</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
+            {/* Banner de Bônus (Trigger) */}
+            {showBonusTrigger && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+                    <div className="flex flex-col items-center gap-6 animate-in zoom-in-50 duration-500">
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-pink-500 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity animate-pulse" />
+                            <Rocket size={120} className="text-[#ff0044] relative animate-bounce" />
+                        </div>
+                        <h2 className="text-6xl font-black italic uppercase tracking-tighter text-white text-center drop-shadow-2xl">
+                            FREE SPINS <br /><span className="text-pink-500">UNLOCKED!</span>
+                        </h2>
+                        <p className="text-xl text-gray-400 font-bold uppercase tracking-[0.3em]">Prepare for the Sweetness</p>
+                    </div>
+                </div>
+            )}
+
             {/* Máquina 7x7 */}
-            <div className="relative p-3 md:p-6 bg-gradient-to-br from-[#1a242d] to-[#0d121b] border-8 border-white/5 rounded-[2.5rem] shadow-2xl">
+            <div className={`relative p-3 md:p-6 rounded-[2.5rem] shadow-2xl transition-all duration-700 border-8 ${isBonusActive ? 'bg-gradient-to-br from-[#2d1a24] to-[#1b0d12] border-pink-500/30 shadow-pink-500/20' : 'bg-gradient-to-br from-[#1a242d] to-[#0d121b] border-white/5'}`}>
+                {/* Contador de Free Spins */}
+                {isBonusActive && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-pink-500 text-white px-6 py-2 rounded-full font-black italic tracking-widest shadow-[0_0_20px_rgba(233,30,99,0.5)] flex items-center gap-3 border-2 border-white/20">
+                        <Rocket size={16} /> FREE SPINS: {fsLeft}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-7 gap-1 md:gap-2">
                     {displayGrid.map((row, r) =>
                         row.map((symbol, c) => {
@@ -235,7 +297,6 @@ export default function SugarSlot() {
                     </button>
                 </div>
             </div>
-
         </div>
     );
 }
