@@ -3,6 +3,7 @@ export type Profile = {
     username: string | null;
     full_name: string | null;
     cpf: string | null;
+    birth_date: string | null;
     balance_real: number;
     balance_demo: number;
     is_admin: boolean;

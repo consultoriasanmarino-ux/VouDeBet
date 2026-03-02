@@ -13,7 +13,6 @@ interface DepositModalProps {
 const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
     const { profile, user, refreshBalance } = useBalance();
 
-    const [activeTab, setActiveTab] = useState<'pix' | 'cupom'>('pix');
     const [amount, setAmount] = useState('50');
     const [step, setStep] = useState<'amount' | 'cpf_verification' | 'pix'>('amount');
     const pixKey = "00020126580014BR.GOV.BCB.PIX01366dec3a0b-1f8a-4c2a-aac4-85c6750b018c5204000053039865802BR5915VOU DE BET LTDA6009SAO PAULO62070503***6304E2B1";
@@ -29,7 +28,6 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
     useEffect(() => {
         if (isOpen) {
             setStep('amount');
-            setActiveTab('pix');
             setCouponCode('');
             setCpf('');
             setBirthDate('');
@@ -122,15 +120,6 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                     <X size={24} />
                 </button>
 
-                <div className="flex border-b border-white/5">
-                    <button onClick={() => { setActiveTab('pix'); setStep('amount'); setErrorMsg(''); setSuccessMsg(''); }} className={`flex-1 flex items-center justify-center gap-2 py-6 text-xs font-black uppercase tracking-widest italic transition-all ${activeTab === 'pix' ? 'text-[#ff0044] bg-[#ff004411] border-b-2 border-[#ff0044]' : 'text-gray-500 hover:bg-white/5 border-b-2 border-transparent'}`}>
-                        <Wallet size={16} /> PIX RÁPIDO
-                    </button>
-                    <button onClick={() => { setActiveTab('cupom'); setErrorMsg(''); setSuccessMsg(''); }} className={`flex-1 flex items-center justify-center gap-2 py-6 text-xs font-black uppercase tracking-widest italic transition-all ${activeTab === 'cupom' ? 'text-[#ff0044] bg-[#ff004411] border-b-2 border-[#ff0044]' : 'text-gray-500 hover:bg-white/5 border-b-2 border-transparent'}`}>
-                        <Gift size={16} /> RESGATAR CUPOM
-                    </button>
-                </div>
-
                 <div className="p-12">
                     {errorMsg && (
                         <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center">
@@ -144,7 +133,7 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                         </div>
                     )}
 
-                    {activeTab === 'pix' && step === 'amount' && (
+                    {step === 'amount' && (
                         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-14 h-14 rounded-2xl bg-[#ff004411] flex items-center justify-center text-[#ff0044] border border-[#ff004433]">
@@ -178,16 +167,39 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                                 />
                             </div>
 
+                            <div className="w-full border-t border-white/5 pt-6 mt-4">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">POSSUI UM CÓDIGO PROMOCIONAL?</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Gift size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ff0044]" />
+                                        <input
+                                            type="text"
+                                            value={couponCode}
+                                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                            placeholder="CÓDIGO"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm font-black text-white outline-none focus:border-[#ff004455] transition-all uppercase tracking-[0.1em]"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleRedeemCoupon}
+                                        disabled={isLoading || !couponCode}
+                                        className="bg-white/10 hover:bg-[#ff0044] text-white border border-white/10 rounded-xl px-6 py-4 text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                    >
+                                        {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'RESGATAR'}
+                                    </button>
+                                </div>
+                            </div>
+
                             <button
                                 onClick={handleNextPix}
                                 className="w-full bg-[#ff0044] text-white font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all italic tracking-[0.2em]"
                             >
-                                GERAR QR CODE <ArrowRight size={20} />
+                                GERAR QR CODE PIX <ArrowRight size={20} />
                             </button>
                         </div>
                     )}
 
-                    {activeTab === 'pix' && step === 'cpf_verification' && (
+                    {step === 'cpf_verification' && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                             <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white text-center mb-6">CONFIRME SEUS DADOS</h2>
                             <p className="text-gray-500 text-xs font-bold text-center px-4 mb-4">Para gerar o QRCode em seu nome, precisamos confirmar seu CPF e Data de Nascimento obrigatórios do Banco Central.</p>
@@ -217,7 +229,7 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                         </div>
                     )}
 
-                    {activeTab === 'pix' && step === 'pix' && (
+                    {step === 'pix' && (
                         <div className="flex flex-col items-center gap-8 animate-in slide-in-from-right-8 duration-500">
                             <div className="p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,0,68,0.2)]">
                                 <QrCode size={180} className="text-black" />
@@ -244,38 +256,6 @@ const DepositModal = ({ isOpen, onClose }: DepositModalProps) => {
                                 <CheckCircle2 size={24} className="animate-pulse" />
                                 <p className="text-xs font-black uppercase tracking-widest">Aguardando pagamento de R$ {amount}...</p>
                             </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'cupom' && (
-                        <div className="space-y-8 animate-in slide-in-from-left-4 duration-300">
-                            <div className="flex flex-col items-center gap-4 text-center">
-                                <div className="w-16 h-16 rounded-3xl bg-[#ff0044] text-white flex items-center justify-center shadow-[0_0_30px_rgba(255,0,68,0.6)]">
-                                    <Gift size={32} />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">RESGATAR CUPOM</h2>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Insira um código promocional ou de Bônus</p>
-                                </div>
-                            </div>
-
-                            <div className="relative mt-8">
-                                <input
-                                    type="text"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                    placeholder="EX: VOUDEBET200"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 px-6 text-xl font-black text-center text-white outline-none focus:border-[#ff004455] transition-all uppercase tracking-[0.2em]"
-                                />
-                            </div>
-
-                            <button
-                                onClick={handleRedeemCoupon}
-                                disabled={isLoading || !couponCode}
-                                className="w-full bg-white text-[#05070a] hover:bg-gray-200 font-black py-6 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all italic tracking-[0.2em] disabled:opacity-50"
-                            >
-                                {isLoading ? <Loader2 className="animate-spin" /> : 'RESGATAR SALDO'} <ArrowRight size={20} />
-                            </button>
                         </div>
                     )}
                 </div>
