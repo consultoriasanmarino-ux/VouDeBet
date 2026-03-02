@@ -53,15 +53,35 @@ function DashboardContent() {
   }, []);
 
   const fetchDemoGames = async () => {
-    // Filtramos apenas a engine nativa ou iframe_url interna por enquanto
-    const { data } = await supabase.from('jogos_demo').select('*').order('created_at', { ascending: false });
+    // Para garantir visibilidade em todos os cenários (anon vs auth),
+    // pegamos os jogos e filtramos apenas a engine nativa 'vs20sugarrush'.
+    const { data, error } = await supabase.from('jogos_demo').select('*').order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar jogos:', error);
+      return;
+    }
+
     if (data) {
-      setDemoGames(data.filter(game => game.iframe_url === 'INTERNAL_SUGAR_VDB' || game.slug === 'vs20sugarrush'));
+      const filtered = data.filter(game =>
+        game.iframe_url === 'INTERNAL_SUGAR_VDB' ||
+        game.slug === 'vs20sugarrush' ||
+        game.slug === 'sugar_vdb'
+      );
+      setDemoGames(filtered);
     }
   };
 
   const originalGames = [
-    { title: 'Sugar VouDeBet', image: 'https://images.unsplash.com/photo-1579621970588-a3f5ce762692?auto=format&fit=crop&q=80&w=800', isNew: true, multiplier: '5000x', slug: 'vs20sugarrush', category: 'Slots' },
+    {
+      title: 'Sugar VouDeBet',
+      image: 'https://images.unsplash.com/photo-1579621970588-a3f5ce762692?auto=format&fit=crop&q=80&w=800',
+      isNew: true,
+      multiplier: '5000x',
+      slug: 'vs20sugarrush',
+      category: 'Slots',
+      provider: 'VouDeBet Originals'
+    },
   ];
 
   return (
@@ -110,9 +130,9 @@ function DashboardContent() {
               </p>
 
               <div className="flex items-center gap-5 mt-4">
-                <button onClick={() => setActiveView('crash')} className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] hover:scale-105 transition-all active:scale-95 italic text-sm">
+                <Link href="/play/vs20sugarrush" className="px-12 py-5 bg-[#ff0044] text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(255,0,68,0.4)] hover:scale-105 transition-all active:scale-95 italic text-sm">
                   JOGAR AGORA
-                </button>
+                </Link>
               </div>
             </div>
           </section>
@@ -130,9 +150,9 @@ function DashboardContent() {
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   {originalGames.map((game, idx) => (
-                    <div key={idx} onClick={() => setActiveView(game.slug as any)} className="cursor-pointer">
+                    <Link key={idx} href={`/play/${game.slug}`} className="cursor-pointer">
                       <GameCard {...game} />
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </section>
@@ -149,7 +169,7 @@ function DashboardContent() {
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {demoGames.length > 0 ? demoGames
-                    .filter(g => !activeCategory || g.categoria.toLowerCase() === activeCategory.toLowerCase())
+                    .filter(g => !activeCategory || g.categoria?.toLowerCase() === activeCategory?.toLowerCase())
                     .map((game, idx) => (
                       <Link href={`/play/${game.slug}`} key={idx}>
                         <GameCard
